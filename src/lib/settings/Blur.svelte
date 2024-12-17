@@ -1,28 +1,27 @@
 <script lang="ts">
-  import { Button } from "carbon-components-svelte";
-  import TrashCan from "carbon-icons-svelte/lib/TrashCan.svelte";
+  import Slider from "~/ui/Slider.svelte";
+  // import { Slider } from "carbon-components-svelte"; // TODO вернуть как было
+  import Reset from "./_Reset.svelte";
 
-  import Slider from "@/ui/Slider.svelte";
-  import { blurFilter } from "./model.svelte";
+  import { blurFilter, resetBlur } from "./model.svelte";
 </script>
 
 <div class="settings-group">
   <Slider
     labelText="Filter size"
-    light
     min={0}
     max={96}
     step={1}
     bind:value={blurFilter.filterSize}
   />
+  <!-- bind:value={blurFilter.filterSize} -->
   <Slider
     labelText="Iterations"
-    light
     min={0}
     max={10}
     step={1}
     bind:value={blurFilter.iterations}
   />
 
-<Button kind="danger-tertiary" iconDescription="Delete" icon={TrashCan} />
+  <Reset reset={resetBlur} />
 </div>

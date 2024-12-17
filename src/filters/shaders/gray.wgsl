@@ -19,21 +19,15 @@ const R = 0.21;
 const G = 0.72;
 const B = 0.07;
 
-struct Factor {
-    r: f32,
-    g: f32,
-    b: f32,
-}
-
-struct Coefficient {
+struct Color {
     r: f32,
     g: f32,
     b: f32,
 }
 
 @group(0) @binding(0) var<uniform> variant : u32; // 0 - lightness, 1 - average, 2 - luminosity
-@group(0) @binding(1) var<uniform> factor : Factor;
-@group(0) @binding(2) var<uniform> coeffs : Coefficient;
+@group(0) @binding(1) var<uniform> factor : Color;
+@group(0) @binding(2) var<uniform> coeffs : Color;
 
 
 @group(1) @binding(0) var input_texture : texture_2d<f32>;
@@ -45,7 +39,6 @@ fn main(
 ) {
     let dimensions = textureDimensions(input_texture);
     if u32(global_id.x) >= dimensions.x || u32(global_id.y) >= dimensions.y {
-        // todo это нужно будет если картинка будет не квадратная 
         return;
     }
 

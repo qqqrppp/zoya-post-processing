@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { Tile, Accordion, AccordionItem } from "carbon-components-svelte";
+  import { Tile, AccordionItem } from "carbon-components-svelte";
+  import Accordion from "~/ui/Accordion.svelte"
+  import { grayFilter, inverseFilter } from './settings/model.svelte'
+  $inspect(grayFilter, inverseFilter).with((type, value) => {
+    // console.log(123) TODO сделать историю команд
+  })
 
   import SidebarItem from "./SidebarItem.svelte";
 
@@ -7,13 +12,20 @@
   import PixelateSettings from "./settings/Pixelate.svelte";
   import InverseSettings from "./settings/Inverse.svelte";
   import BlurSettings from "./settings/Blur.svelte";
+  import ColorCorrectionSettings from "./settings/ColorCorrection.svelte";
+  import ContrastSettings from "./settings/Contrast.svelte";
+  import MatrixSettings from "./settings/Matrix.svelte";
+
   
+
+
+
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
   import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
   import SaveSeries from "carbon-icons-svelte/lib/WatsonHealthSaveSeries.svelte";
   import Contrast from "carbon-icons-svelte/lib/Contrast.svelte";
 
-  let selected = $state("preset");
+  let selected = $state("effect");
   let items = $state([
     {
       icon: SaveSeries,
@@ -36,6 +48,8 @@
       isSelected: false,
     },
   ]);
+
+
 </script>
 
 <nav class="sidebar">
@@ -49,30 +63,43 @@
       />
     {/each}
   </ul>
-  <Tile>
-    <div class="sidebar-main"></div>
+  <!-- <div > -->
 
-    <Accordion>
-      {#if selected == "color"}
-        <AccordionItem title="Grayscale">
-          <GraySettings />
-        </AccordionItem>
-        <AccordionItem title="Inverse">
-          <InverseSettings />
-        </AccordionItem>
-      {/if}
+    <Tile>
+      <div class="sidebar-main">
+        <Accordion>
+          {#if selected == "color"}
+            <AccordionItem title="Color correction">
+              <ColorCorrectionSettings />
+            </AccordionItem>
+            <AccordionItem title="Contrast">
+              <ContrastSettings />
+            </AccordionItem>
+            <AccordionItem title="Grayscale">
+              <GraySettings />
+            </AccordionItem>
+            <AccordionItem title="Inverse">
+              <InverseSettings />
+            </AccordionItem>
+          {/if}
+  
+          {#if selected == "effect"}
+            <AccordionItem title="Matrix">
+              <MatrixSettings />
+            </AccordionItem>
 
-      {#if selected == "effect"}
-        <AccordionItem title="Pixelate">
-          <PixelateSettings />
-        </AccordionItem>
-
-        <AccordionItem title="Blur">
-          <BlurSettings />
-        </AccordionItem>
-      {/if}
-    </Accordion>
-  </Tile>
+            <AccordionItem title="Pixelate">
+              <PixelateSettings />
+            </AccordionItem>
+  
+            <AccordionItem title="Blur">
+              <BlurSettings />
+            </AccordionItem>
+          {/if}
+        </Accordion>
+      </div>
+    </Tile>
+  <!-- </div> -->
 </nav>
 
 <style>
@@ -81,8 +108,23 @@
     flex-flow: row;
     /* margin-top: var(--cds-spacing-09, 3rem);
     height: calc(100vh - 48px); */
-    /* width: 30rem; */
+    /* min-width: 30rem; */
+    /* overflow-y: auto;
+    height: 100%; */
   }
+
+  .sidebar :global(.bx--tile) {
+    height: 100%;
+    overflow-y: auto;
+    max-width: 26rem;
+    min-width: 26rem;
+
+  }
+
+  /* .sidebar-container {
+    height: 100%;
+    overflow: auto;
+  } */
 
   .sidebar-mini {
     height: 100%;
@@ -90,6 +132,7 @@
   }
 
   .sidebar-main {
-    min-width: 23rem;
+
+    /* min-width: 24rem; */
   }
 </style>

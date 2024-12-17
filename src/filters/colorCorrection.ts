@@ -1,36 +1,47 @@
 import { Filter } from './filter'
-import pixelateWGSL from './shaders/pixelate.wgsl?raw';
+import colorCorrectionWGSL from './shaders/colorCorrection.wgsl?raw';
 
-
-export type PixelateSettings = {
-    pixelSize: number, // 1,2,3..16..32 to resolution
+export type ColorCorrectionSettings = {
+    color: [number, number, number], // from -100 - 100  
+    reduction: [number, number, number], // from 0.0 to 1.0  
 }
 
-export class Pixelate extends Filter<PixelateSettings> {
+export class ColorCorrection extends Filter<ColorCorrectionSettings> {
     init() {
-        const pipeline = this.device.createComputePipeline({
+        const grayPipeline = this.device.createComputePipeline({
             layout: 'auto',
             compute: {
                 module: this.device.createShaderModule({
-                    code: pixelateWGSL,
+                    code: colorCorrectionWGSL,
                 }),
                 // entryPoint: "main"
             },
         });
 
-        const pixelSizeBuffer = this.device.createBuffer({
-            size: 4,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        let colorBuffer = this.device.createBuffer({
+            size: 16,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+        });
+
+        let coeffsBuffer = this.device.createBuffer({
+            size: 16,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
 
         const computeConstants = this.device.createBindGroup({
-            label: "pixelate buffer group",
-            layout: pipeline.getBindGroupLayout(0),
+            label: "color correction buffer group",
+            layout: grayPipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
                     resource: {
-                        buffer: pixelSizeBuffer,
+                        buffer: colorBuffer,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: coeffsBuffer,
                     }
                 },
             ],
@@ -46,8 +57,8 @@ export class Pixelate extends Filter<PixelateSettings> {
         });
 
         const computeBindGroup = this.device.createBindGroup({
-            label: "gray compute group",
-            layout: pipeline.getBindGroupLayout(1),
+            label: "color correction compute group",
+            layout: grayPipeline.getBindGroupLayout(1),
             entries: [
                 {
                     binding: 0,
@@ -60,31 +71,33 @@ export class Pixelate extends Filter<PixelateSettings> {
             ],
         });
 
-        const update = (settings: PixelateSettings) => {
+        // preparing computing frame
+        const update = (settings: ColorCorrectionSettings) => {
             this.device.queue.writeBuffer(
-                pixelSizeBuffer,
+                colorBuffer,
                 0,
-                new Int32Array([settings.pixelSize])
+                new Float32Array(settings.color.map(x => x / 100))
             );
+
+            this.device.queue.writeBuffer(
+                coeffsBuffer,
+                0,
+                new Float32Array(settings.reduction)
+            );           
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
-        const compute = (commandEncoder: GPUCommandEncoder, settings: PixelateSettings) => {
-            if (settings.pixelSize == 0) {
-                return;
-            }
-            update(settings);
+        const compute = (commandEncoder: GPUCommandEncoder, settings: ColorCorrectionSettings) => {
+            update(settings)
 
             const computePass = commandEncoder.beginComputePass({
-                label: "pixelate pass"
+                label: "color correction pass"
             });
-
-            computePass.setPipeline(pipeline);
+            computePass.setPipeline(grayPipeline);
             computePass.setBindGroup(0, computeConstants);
 
             computePass.setBindGroup(1, computeBindGroup);
-
 
             computePass.dispatchWorkgroups(
                 Math.ceil(w),
@@ -102,5 +115,8 @@ export class Pixelate extends Filter<PixelateSettings> {
         }
 
         return compute
+
     }
 }
+
+export class Contrast extends ColorCorrection {};

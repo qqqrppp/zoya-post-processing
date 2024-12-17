@@ -1,10 +1,8 @@
-// inverse color shader 
 struct Coefficient {
     r: f32,
     g: f32,
     b: f32,
 }
-// @group(0) @binding(0) var<uniform> coeffs : Coefficient;
 @group(0) @binding(0) var<uniform> coeffs : Coefficient;
 
 
@@ -20,12 +18,6 @@ fn main(
     if(u32(global_id.x) >= dimensions.x || u32(global_id.y) >= dimensions.y) {
       return;
     }
-
-    // let a = coeffs;
-    // let coeffsr = 0.1;
-    // let coeffsg = 0.1;
-    // let b = 0.1;
-
 
     let color = textureLoad(input_texture, vec2i(global_id.xy), 0);
     let inverse = vec4f(

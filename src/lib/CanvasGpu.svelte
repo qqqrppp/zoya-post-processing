@@ -1,30 +1,32 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { Core } from "@/filters";
+  import { onMount, tick } from "svelte";
+  import { Core, Blur, Gray, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
   import {
     blurFilter,
     grayFilter,
     pixelateFilter,
     matrixFilter,
     inverseFilter,
+    colorFilter,
+    contrastFilter,
   } from "./settings/model.svelte";
-
-  $effect(() => {
-    render();
-  });
 
   let { file } = $props();
   let filter = $state<Core>();
 
   const render = () => {
     filter?.view({
-      Blur: blurFilter,
-      Gray: grayFilter,
-      Pixelate: pixelateFilter,
-      Matrix: pixelateFilter,
-      Inverse: inverseFilter,
+      [Blur.name]: blurFilter,
+      [Gray.name]: grayFilter,
+      [Matrix.name]: matrixFilter,
+      [Pixelate.name]: pixelateFilter,
+      [Inverse.name]: inverseFilter,
+      [ColorCorrection.name]: colorFilter,
+      [Contrast.name]: contrastFilter,
     });
   };
+
+  $effect(render)
 
   let canvas: HTMLCanvasElement;
   let bitMap: ImageBitmap;

@@ -34,7 +34,7 @@ fn main(
   @builtin(workgroup_id) WorkGroupID : vec3u,
   @builtin(local_invocation_id) LocalInvocationID : vec3u
 ) {
-  let filterOffset = (params.filterDim) / 2;
+  let filterOffset = params.filterDim / 2;
   let dimensions = vec2i(textureDimensions(inputTexture, 0));
   let baseIndex = vec2i(
                       WorkGroupID.xy * vec2(params.blockDim, 4) 

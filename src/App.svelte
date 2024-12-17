@@ -1,5 +1,4 @@
 <script>
-  import "./app.css";
   import Sidebar from "./lib/Sidebar.svelte";
   import {
     Header,
@@ -9,10 +8,9 @@
   import Main from "./lib/Main.svelte";
   import Theme from "./ui/Theme.svelte";
 
-  let isSideNavOpen = $state(true);
 </script>
 
-<Header company="Zoya" platformName="Post Processing" bind:isSideNavOpen>
+<Header company="Zoya" platformName="Post Processing">
   <svelte:fragment slot="skip-to-content">
     <SkipToContent />
   </svelte:fragment>

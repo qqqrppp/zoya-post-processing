@@ -2,11 +2,11 @@
   import CanvasGpu from "./CanvasGpu.svelte";
   import { FileUploaderDropContainer } from "carbon-components-svelte";
 
-  let files: File[] = [];
+  let files = $state<File[]>([]);
 </script>
 
 <div class="wrapper">
-  <div class="container">
+  <div>
     {#if !!files.length}
       <CanvasGpu file={files[0]} />
     {:else}

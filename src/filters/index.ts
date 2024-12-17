@@ -4,18 +4,23 @@ import { Blur, type BlurSettings } from './blur'
 import { Gray, type GraySettings, GrayColorFactor } from './gray'
 import { Pixelate, type PixelateSettings } from './pixelate'
 import { Inverse, type InverseSettings } from './inverse'
-
-
-export { type BlurSettings } 
-export { type GraySettings, GrayColorFactor }
-export { type PixelateSettings }
-export { type InverseSettings }
+import { Contrast, ColorCorrection, type ColorCorrectionSettings } from './colorCorrection'
+import { Matrix } from './matrix';
+export { type BlurSettings, Blur } 
+export { type GraySettings, GrayColorFactor, Gray }
+export { type PixelateSettings, Pixelate }
+export { type InverseSettings, Inverse }
+export { type ColorCorrectionSettings, ColorCorrection }
+export { Contrast, Matrix }
 
 const filters = [
     Blur,
     Gray,
     Pixelate,
     Inverse,
+    ColorCorrection,
+    Contrast,
+    Matrix,
 ] as const
 
 type Filters = InstanceType<(typeof filters)[number]>
@@ -43,14 +48,37 @@ export class Core {
         format: GPUTextureFormat,
         imageBitmap: ImageBitmap,
     ) {
+
+        const width = 10;
+        const height = 10;
+        const _ = [255,   0,   0, 255];  // red
+        const y = [255, 255,   0, 255];  // yellow
+        const b = [  0,   0, 255, 255];  // blue
+        const g = [  0, 255,   0, 255];  // green
+        const textureData = new Uint8Array([
+          b, _, _, _, _, _, _, _, _, _,
+          _, y, y, y, _, _, _, _, _, _,
+          _, y, g, _, _, _, g, g, b, _,
+          _, y, y, g, _, _, g, g, b, _,
+          _, y, g, _, _, _, _, _, _, _,
+          _, y, _, _, _, _, g, g, b, _,
+          _, _, _, _, _, _, g, g, b, _,
+          _, _, _, _, _, _, g, g, b, _,
+          _, _, _, _, _, _, g, g, b, _,
+          _, _, _, _, _, _, _, _, _, _,
+        ].flat());
+
         this.context = context;
         this.device = device;
         this.format = format;
-        this.imageBitmap = imageBitmap;
+        this.imageBitmap = imageBitmap
+        // this.imageBitmap = { width,  height, };
 
         this.sampler = this.device.createSampler({
-            magFilter: 'linear',
-            minFilter: 'linear',
+            // magFilter: 'nearest',// 'linear',
+            magFilter: 'nearest',// 'linear',
+
+            minFilter: 'linear',// 'linear',
         });
 
         this.inputTexture = device.createTexture({
@@ -73,6 +101,12 @@ export class Core {
                 | GPUTextureUsage.TEXTURE_BINDING
         });
 
+        // device.queue.writeTexture(
+        //     { texture: this.inputTexture },
+        //     textureData,
+        //     { bytesPerRow: width * 4 },
+        //     { width, height },
+        // );
         this.device.queue.copyExternalImageToTexture(
             { source: this.imageBitmap },
             { texture: this.inputTexture },

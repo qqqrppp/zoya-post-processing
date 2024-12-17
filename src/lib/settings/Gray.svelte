@@ -4,17 +4,18 @@
     RadioButton,
     RadioButtonGroup,
   } from "carbon-components-svelte";
-  import Slider from "@/ui/Slider.svelte";
-  import { grayFilter } from "./model.svelte";
-  import { Variant } from "@/filters/gray";
+  import Slider from "~/ui/Slider.svelte";
+  import { Variant } from "~/filters/gray";
+  import { grayFilter, resetGray } from "./model.svelte";
+  import Reset from "./_Reset.svelte";
 
-  let checked = $state(false);
-  let linkedCoefficient = $state(1);
+  let checked = $state(true);
 
   $effect(() => {
-    grayFilter.coefficient[0] = $state.snapshot(linkedCoefficient);
-    grayFilter.coefficient[1] = $state.snapshot(linkedCoefficient);
-    grayFilter.coefficient[2] = $state.snapshot(linkedCoefficient);
+    if (checked) {
+      grayFilter.coefficient[1] = grayFilter.coefficient[0];
+      grayFilter.coefficient[2] = grayFilter.coefficient[0];
+    }
   });
 </script>
 
@@ -30,40 +31,36 @@
   </RadioButtonGroup>
   <div>
     <Checkbox labelText="Linked Coefficient" bind:checked />
-    {#if !checked}
+    {#if checked}
       <Slider
         labelText="Coefficient"
-        light
         min={0}
-        max={1}
+        max={5}
         step={0.1}
-        bind:value={linkedCoefficient}
+        bind:value={grayFilter.coefficient[0]}
       />
     {:else}
       <Slider
         variant="R"
         labelText="Coefficient R"
-        light
         min={0}
-        max={1}
+        max={5}
         step={0.1}
         bind:value={grayFilter.coefficient[0]}
       />
       <Slider
         variant="G"
         labelText="Coefficient G"
-        light
         min={0}
-        max={1}
+        max={5}
         step={0.1}
         bind:value={grayFilter.coefficient[1]}
       />
       <Slider
         variant="B"
         labelText="Coefficient B"
-        light
         min={0}
-        max={1}
+        max={5}
         step={0.1}
         bind:value={grayFilter.coefficient[2]}
       />
@@ -74,7 +71,6 @@
       <Slider
         variant="R"
         labelText="Color Factor R"
-        light
         min={0}
         max={1}
         step={0.1}
@@ -83,7 +79,6 @@
       <Slider
         variant="G"
         labelText="Color Factor G"
-        light
         min={0}
         max={1}
         step={0.1}
@@ -92,7 +87,6 @@
       <Slider
         variant="B"
         labelText="Color Factor B"
-        light
         min={0}
         max={1}
         step={0.1}
@@ -100,4 +94,5 @@
       />
     {/if}
   </div>
+  <Reset reset={resetGray} />
 </div>
