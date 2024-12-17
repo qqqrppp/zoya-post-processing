@@ -37,7 +37,7 @@ export class Core {
     commandEncoder!: GPUCommandEncoder;
     sampler: GPUSampler;
     inputTexture: GPUTexture;
-    outputTexute: GPUTexture;
+    outputTexture: GPUTexture;
 
     frames: Map<FilterName, FilterFrame> = new Map();
     render: Function;
@@ -92,7 +92,7 @@ export class Core {
 
         });
 
-        this.outputTexute = this.device.createTexture({
+        this.outputTexture = this.device.createTexture({
             size: [this.imageBitmap.width, this.imageBitmap.height],
             format: 'rgba8unorm',
             usage:
@@ -123,7 +123,7 @@ export class Core {
                 this.imageBitmap,
                 this.sampler,
                 this.inputTexture,
-                this.outputTexute,
+                this.outputTexture,
             );
             this.frames.set(F.name, filter.init())
         }
@@ -134,7 +134,7 @@ export class Core {
 
         this.commandEncoder.copyTextureToTexture(
             { texture: this.inputTexture },
-            { texture: this.outputTexute },
+            { texture: this.outputTexture },
             [this.imageBitmap.width, this.imageBitmap.height]
         );
     }
@@ -172,7 +172,7 @@ export class Core {
                 },
                 {
                     binding: 1,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
             ],
         });

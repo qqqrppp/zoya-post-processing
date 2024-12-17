@@ -82,7 +82,7 @@ export class Blur extends Filter<BlurSettings> {
             entries: [
                 {
                     binding: 1,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 2,
@@ -106,7 +106,7 @@ export class Blur extends Filter<BlurSettings> {
                 },
                 {
                     binding: 2,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 3,
@@ -122,7 +122,7 @@ export class Blur extends Filter<BlurSettings> {
             entries: [
                 {
                     binding: 1,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 2,

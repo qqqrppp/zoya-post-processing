@@ -54,7 +54,7 @@ export class Inverse extends Filter<InverseSettings> {
             entries: [
                 {
                     binding: 0,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 1,
@@ -97,7 +97,7 @@ export class Inverse extends Filter<InverseSettings> {
 
             commandEncoder.copyTextureToTexture(
                 { texture: intermediateTexture },
-                { texture: this.outputTexute },
+                { texture: this.outputTexture },
                 [this.imageBitmap.width, this.imageBitmap.height]
             );
         }

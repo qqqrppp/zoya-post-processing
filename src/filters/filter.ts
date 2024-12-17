@@ -6,7 +6,7 @@ export abstract class Filter<T> {
     sampler: GPUSampler;
     // commandEncoder: GPUCommandEncoder;
     inputTexture: GPUTexture;
-    outputTexute: GPUTexture;
+    outputTexture: GPUTexture;
 
     constructor(
         context: GPUCanvasContext,
@@ -16,7 +16,7 @@ export abstract class Filter<T> {
         sampler: GPUSampler,
 
         inputTexture: GPUTexture,
-        outputTexute: GPUTexture,
+        outputTexture: GPUTexture,
     ) {
         this.context = context;
         this.device = device;
@@ -26,7 +26,7 @@ export abstract class Filter<T> {
 
         // this.commandEncoder = commandEncoder;
         this.inputTexture = inputTexture;
-        this.outputTexute = outputTexute;
+        this.outputTexture = outputTexture;
 
     }
 

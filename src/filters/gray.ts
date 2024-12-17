@@ -86,7 +86,7 @@ export class Gray extends Filter<GraySettings> {
             entries: [
                 {
                     binding: 0,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 1,
@@ -139,7 +139,7 @@ export class Gray extends Filter<GraySettings> {
 
             commandEncoder.copyTextureToTexture(
                 { texture: intermediateTexture },
-                { texture: this.outputTexute },
+                { texture: this.outputTexture },
                 [this.imageBitmap.width, this.imageBitmap.height]
             );
         }

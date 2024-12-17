@@ -57,28 +57,28 @@ export class Matrix extends Filter<MatrixSettings> {
                 module: this.device.createShaderModule({
                     code: matrixWGSL,
                 }),
-                // entryPoint: "main"
+                entryPoint: "main"
             },
         });
 
         const sizeBuffer = this.device.createBuffer({
-            label: 'size buffer',
-            size: 2 * Float32Array.BYTES_PER_ELEMENT,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            label: 'matrix size buffer',
+            size: 12,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
 
         let coeffsBuffer = this.device.createBuffer({
-            label: 'coeff buffer',
+            label: 'matrix coeffs buffer',
             size: 16,
-            usage:  GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
 
 
-        const matrixBuffer = this.device.createBuffer({
-            label: 'matrix buffer',
-            size: 48,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
+        // const matrixBuffer = this.device.createBuffer({
+        //     label: 'matrix buffer',
+        //     size: 48,
+        //     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        // });
 
         const computeConstants = this.device.createBindGroup({
             label: "matrix buffer group",
@@ -96,12 +96,12 @@ export class Matrix extends Filter<MatrixSettings> {
                         buffer: coeffsBuffer,
                     }
                 },
-                {
-                    binding: 2,
-                    resource: {
-                        buffer: matrixBuffer,
-                    },
-                }
+                // {
+                //     binding: 2,
+                //     resource: {
+                //         buffer: matrixBuffer,
+                //     },
+                // }
             ],
         });
 
@@ -120,7 +120,7 @@ export class Matrix extends Filter<MatrixSettings> {
             entries: [
                 {
                     binding: 0,
-                    resource: this.outputTexute.createView(),
+                    resource: this.outputTexture.createView(),
                 },
                 {
                     binding: 1,
@@ -137,10 +137,11 @@ export class Matrix extends Filter<MatrixSettings> {
             );
 
 
+            console.log(settings.coefficient[0], new Float32Array(settings.coefficient))
             this.device.queue.writeBuffer(
                 coeffsBuffer,
                 0,
-                new Float32Array([1.0,1.0,1.0])
+                new Float32Array(settings.coefficient)
             );
 
             const matrixData = new Float32Array([
@@ -150,22 +151,19 @@ export class Matrix extends Filter<MatrixSettings> {
                 0.0,  1.0, 2.0
             ]);
 
-            console.log(matrixData.byteLength)
 
-            this.device.queue.writeBuffer(
-                matrixBuffer,
-                0,
-                // new Float32Array(settings.matrix)
-                matrixData,
-                // 0, 9,
-            );
+            // this.device.queue.writeBuffer(
+            //     matrixBuffer,
+            //     0,
+            //     // new Float32Array(settings.matrix)
+            //     matrixData,
+            //     // 0, 9,
+            // );
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
         const compute = (commandEncoder: GPUCommandEncoder, settings: MatrixSettings) => {
-// console.log(settings, settings.size[0] == 0 || settings.size[1] == 0)
-//             return;
             if (settings.size[0] == 0 || settings.size[1] == 0) {
                 return;
             }
@@ -192,7 +190,7 @@ export class Matrix extends Filter<MatrixSettings> {
 
             commandEncoder.copyTextureToTexture(
                 { texture: intermediateTexture },
-                { texture: this.outputTexute },
+                { texture: this.outputTexture },
                 [this.imageBitmap.width, this.imageBitmap.height]
             );
         }
