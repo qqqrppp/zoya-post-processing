@@ -8,7 +8,7 @@ export type ColorCorrectionSettings = {
 
 export class ColorCorrection extends Filter<ColorCorrectionSettings> {
     init() {
-        const grayPipeline = this.device.createComputePipeline({
+        const pipeline = this.device.createComputePipeline({
             layout: 'auto',
             compute: {
                 module: this.device.createShaderModule({
@@ -30,7 +30,7 @@ export class ColorCorrection extends Filter<ColorCorrectionSettings> {
 
         const computeConstants = this.device.createBindGroup({
             label: "color correction buffer group",
-            layout: grayPipeline.getBindGroupLayout(0),
+            layout: pipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
@@ -58,7 +58,7 @@ export class ColorCorrection extends Filter<ColorCorrectionSettings> {
 
         const computeBindGroup = this.device.createBindGroup({
             label: "color correction compute group",
-            layout: grayPipeline.getBindGroupLayout(1),
+            layout: pipeline.getBindGroupLayout(1),
             entries: [
                 {
                     binding: 0,
@@ -94,7 +94,7 @@ export class ColorCorrection extends Filter<ColorCorrectionSettings> {
             const computePass = commandEncoder.beginComputePass({
                 label: "color correction pass"
             });
-            computePass.setPipeline(grayPipeline);
+            computePass.setPipeline(pipeline);
             computePass.setBindGroup(0, computeConstants);
 
             computePass.setBindGroup(1, computeBindGroup);

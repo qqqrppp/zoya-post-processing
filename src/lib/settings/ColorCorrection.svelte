@@ -5,7 +5,7 @@
     RadioButtonGroup,
   } from "carbon-components-svelte";
   import Slider from "~/ui/Slider.svelte";
-  import { Variant } from "~/filters/gray";
+  import { Variant } from "~/filters/saturation";
   import { colorFilter, resetColor } from "./model.svelte";
   import Reset from "./_Reset.svelte";
 </script>

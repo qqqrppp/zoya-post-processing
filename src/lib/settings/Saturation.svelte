@@ -5,16 +5,16 @@
     RadioButtonGroup,
   } from "carbon-components-svelte";
   import Slider from "~/ui/Slider.svelte";
-  import { Variant } from "~/filters/gray";
-  import { grayFilter, resetGray } from "./model.svelte";
+  import { Variant } from "~/filters/saturation";
+  import { saturationFilter, resetSaturation } from "./model.svelte";
   import Reset from "./_Reset.svelte";
 
   let checked = $state(true);
 
   $effect(() => {
     if (checked) {
-      grayFilter.coefficient[1] = grayFilter.coefficient[0];
-      grayFilter.coefficient[2] = grayFilter.coefficient[0];
+      saturationFilter.coefficient[1] = saturationFilter.coefficient[0];
+      saturationFilter.coefficient[2] = saturationFilter.coefficient[0];
     }
   });
 </script>
@@ -23,7 +23,7 @@
   <RadioButtonGroup
     legendText="Variant"
     name="plan"
-    bind:selected={grayFilter.variant}
+    bind:selected={saturationFilter.variant}
   >
     <RadioButton labelText="Lightness" value={Variant.lightness} />
     <RadioButton labelText="Average" value={Variant.average} />
@@ -37,7 +37,7 @@
         min={0}
         max={5}
         step={0.1}
-        bind:value={grayFilter.coefficient[0]}
+        bind:value={saturationFilter.coefficient[0]}
       />
     {:else}
       <Slider
@@ -46,7 +46,7 @@
         min={0}
         max={5}
         step={0.1}
-        bind:value={grayFilter.coefficient[0]}
+        bind:value={saturationFilter.coefficient[0]}
       />
       <Slider
         variant="G"
@@ -54,7 +54,7 @@
         min={0}
         max={5}
         step={0.1}
-        bind:value={grayFilter.coefficient[1]}
+        bind:value={saturationFilter.coefficient[1]}
       />
       <Slider
         variant="B"
@@ -62,19 +62,19 @@
         min={0}
         max={5}
         step={0.1}
-        bind:value={grayFilter.coefficient[2]}
+        bind:value={saturationFilter.coefficient[2]}
       />
     {/if}
   </div>
   <div>
-    {#if grayFilter.variant == 2}
+    {#if saturationFilter.variant == 2}
       <Slider
         variant="R"
         labelText="Color Factor R"
         min={0}
         max={1}
         step={0.1}
-        bind:value={grayFilter.colorFactor[0]}
+        bind:value={saturationFilter.colorFactor[0]}
       />
       <Slider
         variant="G"
@@ -82,7 +82,7 @@
         min={0}
         max={1}
         step={0.1}
-        bind:value={grayFilter.colorFactor[1]}
+        bind:value={saturationFilter.colorFactor[1]}
       />
       <Slider
         variant="B"
@@ -90,9 +90,9 @@
         min={0}
         max={1}
         step={0.1}
-        bind:value={grayFilter.colorFactor[2]}
+        bind:value={saturationFilter.colorFactor[2]}
       />
     {/if}
   </div>
-  <Reset reset={resetGray} />
+  <Reset reset={resetSaturation} />
 </div>

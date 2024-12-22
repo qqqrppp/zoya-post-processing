@@ -1,9 +1,9 @@
 // https://www.johndcook.com/blog/2009/08/24/algorithms-convert-color-grayscale/
 // https://docs.gimp.org/2.6/en/gimp-tool-desaturate.html
 //
-// RGBA color to RGBA greyscale
+// RGBA color to RGBA saturation
 //
-// smooth transition based on u_colorFactor: 0.0 = original, 1.0 = greyscale
+// smooth transition based on u_colorFactor: 0.0 = gray, 1.0 = original
 //
 // http://www.johndcook.com/blog/2009/08/24/algorithms-convert-color-grayscale/
 // "The luminosity method is a more sophisticated version of the average method.
@@ -38,35 +38,36 @@ fn main(
     @builtin(global_invocation_id) global_id: vec3u,
 ) {
     let dimensions = textureDimensions(input_texture);
-    if u32(global_id.x) >= dimensions.x || u32(global_id.y) >= dimensions.y {
+    if u32(global_id.x) >= dimensions.x 
+    || u32(global_id.y) >= dimensions.y {
         return;
     }
 
     let color = textureLoad(input_texture, vec2i(global_id.xy), 0);
 
-    var gray: f32;
+    var saturation: f32;
 
     switch variant {
         case LIGHTNESS, default {
-            gray = (max(max(color.r, color.g), color.b) + min(min(color.r, color.g), color.b)) / 2;
+            saturation = (max(max(color.r, color.g), color.b) + min(min(color.r, color.g), color.b)) / 2;
             break;
         }
         case AVERAGE: {
-            gray = (color.r + color.g + color.b) / 3;
+            saturation = (color.r + color.g + color.b) / 3;
             break;
         }
         case LUMINOCITY: {
-            gray =  factor.r * color.r + factor.g * color.g + factor.b * color.b;
+            saturation =  factor.r * color.r + factor.g * color.g + factor.b * color.b;
             break;
         }
     }
 
-    let grayscale = vec4(
-        color.r * coeffs.r + gray * (1.0 - coeffs.r),
-        color.g * coeffs.g + gray * (1.0 - coeffs.g),
-        color.b * coeffs.b + gray * (1.0 - coeffs.b),
+    let scale = vec4(
+        color.r * coeffs.r + saturation * (1.0 - coeffs.r),
+        color.g * coeffs.g + saturation * (1.0 - coeffs.g),
+        color.b * coeffs.b + saturation * (1.0 - coeffs.b),
         color.a
     );
 
-    textureStore(output_texture, vec2i(global_id.xy), vec4f(grayscale));
+    textureStore(output_texture, vec2i(global_id.xy), vec4f(scale));
 }

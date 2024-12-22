@@ -1,13 +1,13 @@
 import fullscreenTexturedQuadWGSL from './shaders/fullscreenTexturedQuad.wgsl?raw';
 
 import { Blur, type BlurSettings } from './blur'
-import { Gray, type GraySettings, GrayColorFactor } from './gray'
+import { Saturation, type SaturationSettings, SaturationColorFactor } from './saturation'
 import { Pixelate, type PixelateSettings } from './pixelate'
 import { Inverse, type InverseSettings } from './inverse'
 import { Contrast, ColorCorrection, type ColorCorrectionSettings } from './colorCorrection'
 import { Matrix } from './matrix';
 export { type BlurSettings, Blur } 
-export { type GraySettings, GrayColorFactor, Gray }
+export { type SaturationSettings, SaturationColorFactor, Saturation }
 export { type PixelateSettings, Pixelate }
 export { type InverseSettings, Inverse }
 export { type ColorCorrectionSettings, ColorCorrection }
@@ -15,7 +15,7 @@ export { Contrast, Matrix }
 
 const filters = [
     Blur,
-    Gray,
+    Saturation,
     Pixelate,
     Inverse,
     ColorCorrection,

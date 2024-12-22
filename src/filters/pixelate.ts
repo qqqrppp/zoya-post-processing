@@ -46,7 +46,7 @@ export class Pixelate extends Filter<PixelateSettings> {
         });
 
         const computeBindGroup = this.device.createBindGroup({
-            label: "gray compute group",
+            label: "pixelate compute group",
             layout: pipeline.getBindGroupLayout(1),
             entries: [
                 {

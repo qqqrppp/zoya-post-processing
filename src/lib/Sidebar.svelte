@@ -1,24 +1,20 @@
 <script lang="ts">
   import { Tile, AccordionItem } from "carbon-components-svelte";
   import Accordion from "~/ui/Accordion.svelte"
-  import { grayFilter, inverseFilter } from './settings/model.svelte'
-  $inspect(grayFilter, inverseFilter).with((type, value) => {
-    // console.log(123) TODO сделать историю команд
-  })
+  // import { saturationFilter, inverseFilter } from './settings/model.svelte'
+  // $inspect(saturationFilter, inverseFilter).with((type, value) => {
+  //   // console.log(123) TODO сделать историю команд
+  // })
 
   import SidebarItem from "./SidebarItem.svelte";
 
-  import GraySettings from "./settings/Gray.svelte";
+  import SaturationSettings from "./settings/Saturation.svelte";
   import PixelateSettings from "./settings/Pixelate.svelte";
   import InverseSettings from "./settings/Inverse.svelte";
   import BlurSettings from "./settings/Blur.svelte";
   import ColorCorrectionSettings from "./settings/ColorCorrection.svelte";
   import ContrastSettings from "./settings/Contrast.svelte";
   import MatrixSettings from "./settings/Matrix.svelte";
-
-  
-
-
 
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
   import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
@@ -75,8 +71,8 @@
             <AccordionItem title="Contrast">
               <ContrastSettings />
             </AccordionItem>
-            <AccordionItem title="Grayscale">
-              <GraySettings />
+            <AccordionItem title="Saturation">
+              <SaturationSettings />
             </AccordionItem>
             <AccordionItem title="Inverse">
               <InverseSettings />

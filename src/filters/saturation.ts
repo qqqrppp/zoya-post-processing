@@ -1,5 +1,5 @@
 import { Filter } from './filter'
-import grayWGSL from './shaders/gray.wgsl?raw';
+import saturationWGSL from './shaders/saturation.wgsl?raw';
 
 export enum Variant {
     lightness,
@@ -7,25 +7,25 @@ export enum Variant {
     luminosity,
 }
 
-export enum GrayColorFactor {
+export enum SaturationColorFactor {
     R = 0.21,
     G = 0.72,
     B = 0.07,
 }
 
-export type GraySettings = {
+export type SaturationSettings = {
     variant: Variant, // 1 - lightness, 2 - average, 3 - luminosity
     coefficient: [number, number, number], // from 0.0 to 1.0  
     colorFactor: [number, number, number], // from 0.0 to 1.0  
 }
 
-export class Gray extends Filter<GraySettings> {
+export class Saturation extends Filter<SaturationSettings> {
     init() {
-        const grayPipeline = this.device.createComputePipeline({
+        const pipeline = this.device.createComputePipeline({
             layout: 'auto',
             compute: {
                 module: this.device.createShaderModule({
-                    code: grayWGSL,
+                    code: saturationWGSL,
                 }),
                 // entryPoint: "main"
             },
@@ -47,8 +47,8 @@ export class Gray extends Filter<GraySettings> {
         });
 
         const computeConstants = this.device.createBindGroup({
-            label: "gray buffer group",
-            layout: grayPipeline.getBindGroupLayout(0),
+            label: "Saturation buffer group",
+            layout: pipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
@@ -81,8 +81,8 @@ export class Gray extends Filter<GraySettings> {
         });
 
         const computeBindGroup = this.device.createBindGroup({
-            label: "gray compute group",
-            layout: grayPipeline.getBindGroupLayout(1),
+            label: "Saturation compute group",
+            layout: pipeline.getBindGroupLayout(1),
             entries: [
                 {
                     binding: 0,
@@ -96,7 +96,7 @@ export class Gray extends Filter<GraySettings> {
         });
 
         // preparing computing frame
-        const update = (settings: GraySettings) => {
+        const update = (settings: SaturationSettings) => {
             this.device.queue.writeBuffer(
                 variantBuffer,
                 0,
@@ -118,13 +118,13 @@ export class Gray extends Filter<GraySettings> {
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
-        const compute = (commandEncoder: GPUCommandEncoder, settings: GraySettings) => {
+        const compute = (commandEncoder: GPUCommandEncoder, settings: SaturationSettings) => {
             update(settings)
 
             const computePass = commandEncoder.beginComputePass({
-                label: "grayscale pass"
+                label: "Saturationscale pass"
             });
-            computePass.setPipeline(grayPipeline);
+            computePass.setPipeline(pipeline);
             computePass.setBindGroup(0, computeConstants);
 
             computePass.setBindGroup(1, computeBindGroup);

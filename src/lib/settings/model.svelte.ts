@@ -1,8 +1,8 @@
-import { GrayColorFactor } from "~/filters/index";
-import type { BlurSettings, GraySettings, InverseSettings, PixelateSettings, ColorCorrectionSettings } from "~/filters";
+import { SaturationColorFactor } from "~/filters/index";
+import type { BlurSettings, SaturationSettings, InverseSettings, PixelateSettings, ColorCorrectionSettings } from "~/filters";
 import type { MatrixSettings } from "~/filters/matrix";
 
-type Settings = BlurSettings | GraySettings | InverseSettings | PixelateSettings | ColorCorrectionSettings | MatrixSettings
+type Settings = BlurSettings | SaturationSettings | InverseSettings | PixelateSettings | ColorCorrectionSettings | MatrixSettings
 
 
 // const snapshot = <T extends Settings>(obj: T): T => {
@@ -47,16 +47,16 @@ export const blurFilter = $state<BlurSettings>({ ...initBlur })
 
 export const resetBlur = () => reset(blurFilter, initBlur)
 
-//------------------Gray State--------------------------
-const initGray: GraySettings = {
+//------------------Saturation State--------------------------
+const initSaturation: SaturationSettings = {
   variant: 0,
   coefficient: [1.0, 1.0, 1.0],
-  colorFactor: [GrayColorFactor.R, GrayColorFactor.G, GrayColorFactor.B]
+  colorFactor: [SaturationColorFactor.R, SaturationColorFactor.G, SaturationColorFactor.B]
 }
 
-export const grayFilter = $state<GraySettings>({ ...initGray })
+export const saturationFilter = $state<SaturationSettings>({ ...initSaturation })
 
-export const resetGray = () => reset(grayFilter, initGray)
+export const resetSaturation = () => reset(saturationFilter, initSaturation)
 
 //----------------Inverse state----------------------------
 const initInverse: InverseSettings = {

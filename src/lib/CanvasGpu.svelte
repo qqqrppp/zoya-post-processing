@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { Core, Blur, Gray, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
+  import { Core, Blur, Saturation, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
   import {
     blurFilter,
-    grayFilter,
     pixelateFilter,
     matrixFilter,
     inverseFilter,
     colorFilter,
     contrastFilter,
+    saturationFilter,
   } from "./settings/model.svelte";
 
   let { file } = $props();
@@ -17,7 +17,7 @@
   const render = () => {
     filter?.view({
       [Blur.name]: blurFilter,
-      [Gray.name]: grayFilter,
+      [Saturation.name]: saturationFilter,
       [Matrix.name]: matrixFilter,
       [Pixelate.name]: pixelateFilter,
       [Inverse.name]: inverseFilter,
