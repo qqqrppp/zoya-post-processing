@@ -35,6 +35,7 @@
     display: flex;
     flex-flow: column;
     justify-content: center;
+    align-items: center;
   }
 
   .sidebar-nav-element__current {

@@ -90,7 +90,7 @@ export const resetContrast = () => reset(contrastFilter, initContrast)
 //------------------Color Correction State--------------------------
 const initMatrix: MatrixSettings = {
   size: [0, 0],
-  coefficient: [1.0,1.0,1.0],
+  useColors: [2, 2, 2],
   matrix: [
     -2.0, -1.0, 0.0,
     -1.0,  1.0, 1.0,

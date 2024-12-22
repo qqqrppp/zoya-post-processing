@@ -76,7 +76,7 @@ export class Core {
 
         this.sampler = this.device.createSampler({
             // magFilter: 'nearest',// 'linear',
-            magFilter: 'nearest',// 'linear',
+            magFilter: 'linear',// 'linear',
 
             minFilter: 'linear',// 'linear',
         });

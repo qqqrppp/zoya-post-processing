@@ -4,50 +4,13 @@ import matrixWGSL from './shaders/matrix.wgsl?raw';
 
 export type MatrixSettings = {
     size: [number, number], // 1 - 8
-    coefficient: [number, number, number], // from 0.0 to 1.0  
-
+    useColors: [number, number, number], // 0 or 1 or 2 
     matrix: [
         number, number, number,
         number, number, number,
         number, number, number,
     ]
 }
-
-// сдвиг
-// const matrix = new Float32Array(
-//      0, 0, 0,
-//     -1, 1, 0,
-//      0, 0, 0
-// );
-
-// теснение
-// const matrix = new Float32Array(
-//     -2.0, -1.0, 0.0,
-//     -1.0, 1.0, 1.0,
-//     0.0, 1.0, 2.0
-// );
-
-// резкость
-// const matrix = new Float32Array(
-//     0.0, -1.0, 0.0,
-//     -1.0,  5, -1.0,
-//     0.0, -1.0, 0.0
-// );
-
-//  слепок
-// const matrix = new Float32Array([
-//     -1, -1, -1,
-//     -1,  8, -1,
-//     -1, -1, -1
-// ]);
-
-// gausian
-// const matrix = new Float32Array([
-//     1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0,
-//     2.0 / 16.0, 4.0 / 16.0, 2.0 / 16.0,
-//     1.0 / 16.0, 2.0 / 16.0, 1.0 / 16.0
-// ]);
-
 
 export class Matrix extends Filter<MatrixSettings> {
     init() {
@@ -61,7 +24,7 @@ export class Matrix extends Filter<MatrixSettings> {
             },
         });
 
-        const sizeBuffer = this.device.createBuffer({
+        let sizeBuffer = this.device.createBuffer({
             label: 'matrix size buffer',
             size: 12,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
@@ -73,12 +36,11 @@ export class Matrix extends Filter<MatrixSettings> {
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
 
-
-        // const matrixBuffer = this.device.createBuffer({
-        //     label: 'matrix buffer',
-        //     size: 48,
-        //     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        // });
+        const matrixBuffer = this.device.createBuffer({
+            label: 'matrix buffer',
+            size: 48,
+            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+        });
 
         const computeConstants = this.device.createBindGroup({
             label: "matrix buffer group",
@@ -96,12 +58,12 @@ export class Matrix extends Filter<MatrixSettings> {
                         buffer: coeffsBuffer,
                     }
                 },
-                // {
-                //     binding: 2,
-                //     resource: {
-                //         buffer: matrixBuffer,
-                //     },
-                // }
+                {
+                    binding: 2,
+                    resource: {
+                        buffer: matrixBuffer,
+                    },
+                }
             ],
         });
 
@@ -136,29 +98,17 @@ export class Matrix extends Filter<MatrixSettings> {
                 new Int32Array(settings.size)
             );
 
-
-            console.log(settings.coefficient[0], new Float32Array(settings.coefficient))
             this.device.queue.writeBuffer(
                 coeffsBuffer,
                 0,
-                new Float32Array(settings.coefficient)
+                new Uint32Array(settings.useColors)
             );
 
-            const matrixData = new Float32Array([
-                // Assuming you have the matrix data available
-                -2.0, -1.0, 0.0,
-                -1.0,  1.0, 1.0,
-                0.0,  1.0, 2.0
-            ]);
-
-
-            // this.device.queue.writeBuffer(
-            //     matrixBuffer,
-            //     0,
-            //     // new Float32Array(settings.matrix)
-            //     matrixData,
-            //     // 0, 9,
-            // );
+            this.device.queue.writeBuffer(
+                matrixBuffer,
+                0,
+                new Float32Array(settings.matrix)
+            );
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
@@ -175,10 +125,10 @@ export class Matrix extends Filter<MatrixSettings> {
             });
 
             computePass.setPipeline(pipeline);
+
             computePass.setBindGroup(0, computeConstants);
 
             computePass.setBindGroup(1, computeBindGroup);
-
 
             computePass.dispatchWorkgroups(
                 Math.ceil(w),
@@ -191,7 +141,7 @@ export class Matrix extends Filter<MatrixSettings> {
             commandEncoder.copyTextureToTexture(
                 { texture: intermediateTexture },
                 { texture: this.outputTexture },
-                [this.imageBitmap.width, this.imageBitmap.height]
+                [this.imageBitmap.width, this.imageBitmap.height, 1]
             );
         }
 
