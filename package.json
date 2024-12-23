@@ -20,14 +20,11 @@
     "tailwindcss": "^3.4.16",
     "tslib": "^2.8.1",
     "typescript": "^5.7.2",
-    "vite": "^6.0.1"
+    "vite": "^6.0.1",
+    "vite-plugin-purgecss-updated-v5": "^1.2.4"
   },
   "dependencies": {
-    "@carbon/react": "^1.72.0",
-    "@carbon/styles": "^1.71.0",
-    "@carbon/themes": "^11.43.0",
     "@webgpu/types": "^0.1.51",
-    "carbon-components": "^11.66.1",
     "carbon-components-svelte": "^0.86.2",
     "carbon-icons-svelte": "^12.13.0",
     "carbon-preprocess-svelte": "^0.11.8"
