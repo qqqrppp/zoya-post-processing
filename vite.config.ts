@@ -15,8 +15,6 @@ export default defineConfig({
   plugins: [
     svelte(), 
     optimizeCss(),
-    pluginPurgeCss({
-      variables: true,
-    })
+    pluginPurgeCss()
   ],
 })
