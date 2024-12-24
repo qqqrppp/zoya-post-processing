@@ -11,9 +11,6 @@
 </script>
 
 <Header company="Zoya" platformName="Post Processing">
-  <svelte:fragment slot="skip-to-content">
-    <SkipToContent />
-  </svelte:fragment>
   <HeaderUtilities>
     <Theme />
   </HeaderUtilities>
