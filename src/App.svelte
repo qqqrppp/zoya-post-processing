@@ -8,6 +8,9 @@
   import Main from "./lib/Main.svelte";
   import Theme from "./ui/Theme.svelte";
 
+  import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
+
+  injectSpeedInsights();
 </script>
 
 <Header company="Zoya" platformName="Post Processing">
