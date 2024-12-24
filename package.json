@@ -24,7 +24,6 @@
     "vite-plugin-purgecss-updated-v5": "^1.2.4"
   },
   "dependencies": {
-    "@vercel/speed-insights": "^1.1.0",
     "@webgpu/types": "^0.1.51",
     "carbon-components-svelte": "^0.86.2",
     "carbon-icons-svelte": "^12.13.0",
