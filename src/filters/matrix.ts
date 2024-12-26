@@ -1,6 +1,6 @@
 import { Filter } from './filter'
 import matrixWGSL from './shaders/matrix.wgsl?raw';
-
+import { mat3x3f } from '~/helpers';
 
 export type MatrixSettings = {
     size: [number, number], // 1 - 8
@@ -107,14 +107,14 @@ export class Matrix extends Filter<MatrixSettings> {
             this.device.queue.writeBuffer(
                 matrixBuffer,
                 0,
-                new Float32Array(settings.matrix)
+                mat3x3f(settings.matrix)
             );
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
         const compute = (commandEncoder: GPUCommandEncoder, settings: MatrixSettings) => {
-            if (settings.size[0] == 0 || settings.size[1] == 0) {
+            if (settings.size[0] == 0 && settings.size[1] == 0) {
                 return;
             }
 

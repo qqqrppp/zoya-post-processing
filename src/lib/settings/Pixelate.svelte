@@ -1,7 +1,7 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  import { pixelateFilter, resetPixelate } from "./model.svelte";
   import Reset from "./_Reset.svelte";
+  import { pixelate } from "./model.svelte";
 
 </script>
 
@@ -10,9 +10,9 @@
     labelText="Pixel size"
     min={0}
     max={256}
-    step={4}
+    step={1}
     multiplayer={4}
-    bind:value={pixelateFilter.pixelSize}
+    bind:value={$pixelate.pixelSize}
   />
-  <Reset reset={resetPixelate} />
+  <Reset reset={pixelate.reset} />
 </div>

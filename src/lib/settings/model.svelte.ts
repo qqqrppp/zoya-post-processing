@@ -1,109 +1,170 @@
+import { readable, toStore, writable } from "svelte/store";
 import { SaturationColorFactor } from "~/filters/index";
-import type { BlurSettings, SaturationSettings, InverseSettings, PixelateSettings, ColorCorrectionSettings } from "~/filters";
+import type {
+  BlurSettings,
+  SaturationSettings,
+  InverseSettings,
+  PixelateSettings,
+  ColorCorrectionSettings,
+} from "~/filters";
 import type { MatrixSettings } from "~/filters/matrix";
+import { untrack } from "svelte";
 
-type Settings = BlurSettings | SaturationSettings | InverseSettings | PixelateSettings | ColorCorrectionSettings | MatrixSettings
-
-
-// const snapshot = <T extends Settings>(obj: T): T => {
-//   if(obj == null || typeof(obj) != 'object') {
-//     return obj;
-//   }
-
-//   const temp = { ...obj };
-
-//   for(var key in obj) {
-//     if (obj.hasOwnProperty(key)) {
-//       temp[key] = snapshot(obj[key]);
-//     }
-//   }
-
-//   return temp;
-// }
-
-const reset = <T extends Settings>(current: T, init: T) => { 
-  const newState = { ...init }
-  for(let key in current) {
-    current[key] = newState[key]
-  }
-}
+type Settings =
+  | BlurSettings
+  | SaturationSettings
+  | InverseSettings
+  | PixelateSettings
+  | ColorCorrectionSettings
+  | MatrixSettings;
 
 //---------------Pixelate State-----------------------------
 const initPixelate: PixelateSettings = {
   pixelSize: 0,
-}
-
-export const pixelateFilter = $state<PixelateSettings>({ ...initPixelate });
-
-export const resetPixelate = () => reset(pixelateFilter, initPixelate)
+};
 
 //---------------Blur State-----------------------------
 const initBlur: BlurSettings = {
   filterSize: 0,
   iterations: 0,
-}
-
-export const blurFilter = $state<BlurSettings>({ ...initBlur })
-
-export const resetBlur = () => reset(blurFilter, initBlur)
+};
 
 //------------------Saturation State--------------------------
-const initSaturation: SaturationSettings = {
+const initSaturation: SaturationSettings & { isLinkedCoefficient: boolean } = {
+  isLinkedCoefficient: true,
   variant: 0,
   coefficient: [1.0, 1.0, 1.0],
-  colorFactor: [SaturationColorFactor.R, SaturationColorFactor.G, SaturationColorFactor.B]
-}
-
-export const saturationFilter = $state<SaturationSettings>({ ...initSaturation })
-
-export const resetSaturation = () => reset(saturationFilter, initSaturation)
+  colorFactor: [
+    SaturationColorFactor.R,
+    SaturationColorFactor.G,
+    SaturationColorFactor.B,
+  ],
+};
 
 //----------------Inverse state----------------------------
-const initInverse: InverseSettings = {
-  coefficient: [1.0, 1.0, 1.0],
-
-}
-export const inverseFilter = $state<InverseSettings>({ ...initInverse })
-
-export const resetInverse = () => reset(inverseFilter, initInverse)
+const initInverse: InverseSettings & { isLinkedCoefficient: boolean} = {
+  isLinkedCoefficient: true,
+  coefficient: [100, 100, 100],
+};
 
 //------------------Color Correction State--------------------------
 const initColor: ColorCorrectionSettings = {
   color: [0, 0, 0],
-  reduction: [0,0,0]
-}
-
-export const colorFilter = $state<ColorCorrectionSettings>({ ...initColor })
-
-export const resetColor = () => reset(colorFilter, initColor)
+  reduction: [0, 0, 0],
+};
 
 //------------------Color Correction State--------------------------
 const initContrast: ColorCorrectionSettings = {
   color: [0, 0, 0],
-  reduction: [0,0,0]
-}
-
-export const contrastFilter = $state<ColorCorrectionSettings>({ ...initContrast })
-
-export const resetContrast = () => reset(contrastFilter, initContrast)
+  reduction: [0, 0, 0],
+};
 
 //------------------Color Correction State--------------------------
-const initMatrix: MatrixSettings = {
+const initMatrix: MatrixSettings & { isLinkedSize: boolean } = {
+  isLinkedSize: true,
   size: [0, 0],
   useColors: [2, 2, 2],
-  matrix: [
-    -2.0, -1.0, 0.0,
-    -1.0,  1.0, 1.0,
-     0.0,  1.0, 2.0
-  ]
+  matrix: [0, 0, 0, 0, 1, 0, 0, 0, 0],
+};
+
+function createFilter<T extends Settings>(settings: T) {
+  const { subscribe, set, update } = writable(settings);
+  const init = structuredClone(settings);
+
+  const reset = () => {
+    set(structuredClone(init));
+  };
+
+  return {
+    reset,
+    set,
+    subscribe,
+    update,
+  };
 }
 
-export const matrixFilter = $state<MatrixSettings>({ ...initMatrix });
+function createMatrix() {
+  const model = createFilter(initMatrix);
 
-export const resetMatrix = () => reset(matrixFilter, initMatrix)
+  model.subscribe((v) => {
+    if (v.isLinkedSize && v.size[0] !== v.size[1]) {
+      model.set({
+        ...v,
+        size: [v.size[0], v.size[0]],
+      });
+    }
+  });
 
-// export let commands = () => $derived([grayFilter, inverseFilter])
+  return model;
+}
 
-// $inspect([blurFilter, grayFilter]).with((type, value) => {
+function createSaturation() {
+  const model = createFilter(initSaturation);
+
+  model.subscribe((v) => {
+    if (
+      v.isLinkedCoefficient
+      && v.coefficient[0] !== v.coefficient[1]
+      && v.coefficient[0] !== v.coefficient[2]
+    ) {
+      model.set({
+        ...v,
+        coefficient: [v.coefficient[0], v.coefficient[0], v.coefficient[0]],
+      });
+    }
+  });
+
+  return model;
+}
+
+function createInverse() {
+  const model = createFilter(initInverse);
+
+  model.subscribe((v) => {
+    if (
+      v.isLinkedCoefficient
+      && v.coefficient[0] !== v.coefficient[1]
+      && v.coefficient[0] !== v.coefficient[2]
+    ) {
+      model.set({
+        ...v,
+        coefficient: [v.coefficient[0], v.coefficient[0], v.coefficient[0]],
+      });
+    }
+  });
+
+  return model
+}
+
+export const pixelate = createFilter(initPixelate);
+export const blur = createFilter(initBlur);
+export const saturation = createSaturation();
+export const inverse = createInverse();
+export const color = createFilter(initColor);
+export const contrast = createFilter(initContrast);
+export const matrix = createMatrix();
+
+// function createStore(init = []) {
+//   const { subscribe, set, update } = writable(init);
+//   let history = [];
+
+//   // matrixFilter.
+
+//   return {
+//     subscribe,
+//     getHistory: () => history
+//   }
+// }
+
+// export const store = createStore();
+
+// export let commands = derived([matrixFilter], ([$matrixFilter]) => {
+//   console.log($matrixFilter);
+//   return {
+//     $matrixFilter
+//   }
+// });
+
+// $inspect([blurFilter]).with((type, value) => {
 //   console.log(type, value)
 // })

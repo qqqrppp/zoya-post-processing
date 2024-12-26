@@ -1,6 +1,6 @@
-// свертка матриц
+// a simple matrix convolution algorithm
 
-struct Params {
+struct Position {
     x: i32,
     y: i32
 }
@@ -11,7 +11,7 @@ struct Color {
     b: u32,
 }
 
-@group(0) @binding(0) var<uniform> size : Params;
+@group(0) @binding(0) var<uniform> size : Position;
 @group(0) @binding(1) var<uniform> use_color : Color;
 @group(0) @binding(2) var<uniform> matrix : mat3x3f;
 
@@ -22,7 +22,7 @@ struct Color {
 fn main(
     @builtin(global_invocation_id) global_id : vec3u
 ) {
-    let dimensions = textureDimensions(inputTexture, 0);
+    let dimensions = vec2i(textureDimensions(inputTexture, 0));
     let coords = vec2i(global_id.xy);
 
     var color = vec4f(0.0);
@@ -33,12 +33,12 @@ fn main(
 
             // use mirroring for edges
             if coords.x + pixelX <= 0
-            || coords.x + pixelX >= i32(dimensions.x) {
+            || coords.x + pixelX >= dimensions.x {
                 pixelX = -pixelX;
             }
 
             if coords.y + pixelY <= 0
-            || coords.y + pixelY >= i32(dimensions.y) {
+            || coords.y + pixelY >= dimensions.y {
                 pixelY = -pixelY;
             }
 
@@ -67,6 +67,15 @@ fn main(
             } else if use_color.b == 1 {
                 color.b = sampleColor.b;
             }
+
+            // exit size 0
+            if size.x == 0 {
+                break;
+            }
+        }
+
+        if size.y == 0 {
+            break;
         }
     }
 

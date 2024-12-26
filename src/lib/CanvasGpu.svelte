@@ -2,13 +2,13 @@
   import { onMount, tick } from "svelte";
   import { Core, Blur, Saturation, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
   import {
-    blurFilter,
-    pixelateFilter,
-    matrixFilter,
-    inverseFilter,
-    colorFilter,
-    contrastFilter,
-    saturationFilter,
+    pixelate,
+    blur,
+    saturation,
+    inverse,
+    color,
+    contrast,
+    matrix,
   } from "./settings/model.svelte";
 
   let { file } = $props();
@@ -16,13 +16,13 @@
 
   const render = () => {
     filter?.view({
-      [Blur.name]: blurFilter,
-      [Saturation.name]: saturationFilter,
-      [Matrix.name]: matrixFilter,
-      [Pixelate.name]: pixelateFilter,
-      [Inverse.name]: inverseFilter,
-      [ColorCorrection.name]: colorFilter,
-      [Contrast.name]: contrastFilter,
+      [Matrix.name]: $matrix,
+      [Blur.name]: $blur,
+      [Saturation.name]: $saturation,
+      [Pixelate.name]: $pixelate,
+      [Inverse.name]: $inverse,
+      [ColorCorrection.name]: $color,
+      [Contrast.name]: $contrast,
     });
   };
 
@@ -47,8 +47,9 @@
     const context = canvas.getContext("webgpu") as GPUCanvasContext;
 
     const devicePixelRatio = window.devicePixelRatio;
-    canvas.width = canvas.clientWidth * devicePixelRatio;
-    canvas.height = canvas.clientHeight * devicePixelRatio;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
 
     const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 

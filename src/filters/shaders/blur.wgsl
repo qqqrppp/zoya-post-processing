@@ -41,8 +41,8 @@ fn main(
                       + LocalInvocationID.xy * vec2(4, 1)
                     ) - vec2(filterOffset, 0);
 
-  for (var r = 0; r < 4; r++) {
-    for (var c = 0; c < 4; c++) {
+  for (var r = 0; r < 4; r += 1) {
+    for (var c = 0; c < 4; c += 1) {
       var loadIndex = baseIndex + vec2(c, r);
       if (flip.value != 0u) {
         loadIndex = loadIndex.yx;
@@ -59,8 +59,8 @@ fn main(
 
   workgroupBarrier();
 
-  for (var r = 0; r < 4; r++) {
-    for (var c = 0; c < 4; c++) {
+  for (var r = 0; r < 4; r += 1) {
+    for (var c = 0; c < 4; c += 1) {
       var writeIndex = baseIndex + vec2(c, r);
       if (flip.value != 0) {
         writeIndex = writeIndex.yx;

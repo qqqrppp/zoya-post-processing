@@ -1,12 +1,9 @@
+import { isEqualArray } from '~/helpers';
 import { Filter } from './filter'
 import inverseWGSL from './shaders/inverse.wgsl?raw';
 
 export type InverseSettings = {
     coefficient: [number, number, number], // from 0.0 to 1.0  
-}
-
-function isEqual(a: number[], b: number[]) {
-    return (new Set(a)).difference(new Set(b)).size === 0
 }
 
 export class Inverse extends Filter<InverseSettings> {
@@ -67,14 +64,14 @@ export class Inverse extends Filter<InverseSettings> {
             this.device.queue.writeBuffer(
                 buffer,
                 0,
-                new Float32Array(settings.coefficient)
+                new Float32Array(settings.coefficient.map(x => x / 100))
             );
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
         const compute = (commandEncoder: GPUCommandEncoder, settings: InverseSettings) => {
-            if (isEqual(settings.coefficient, [1,1,1])) return;
+            if (isEqualArray(settings.coefficient, [100,100,100])) return;
 
             update(settings);
 

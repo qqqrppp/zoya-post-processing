@@ -1,68 +1,68 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  import { matrixFilter, resetMatrix } from "./model.svelte";
+  import { matrix } from "./model.svelte";
   import { NumberInput, TextInput, Checkbox, RadioButton, RadioButtonGroup } from "carbon-components-svelte";
   import Reset from "./_Reset.svelte";
 
-  let checked = $state(true);
-
-  $effect(() => {
-    if (checked) {
-      matrixFilter.size[1] = matrixFilter.size[0];
-    }
-  });
-
-  const Variant = {
-    gauss: 0,
-    embossing: 1,
-    edge: 2,
-    sharpness: 3,
+  const variants = {
+    custom: 0,
+    gauss: 1,
+    embossing: 2,
+    edge: 3,
+    sharpness: 4,
   };
-  let variant = $state(Variant.embossing)
+  
+  let variant = $state(variants.custom)
 
   $effect(() => {
     switch(variant) {
-      case Variant.embossing:
-        matrixFilter.matrix = [
+      case variants.embossing:
+        $matrix.matrix = [
           -2.0, -1.0, 0.0,
           -1.0,  1.0, 1.0,
           0.0 ,  1.0, 2.0
         ];
         return;
-      case Variant.gauss:
-        matrixFilter.matrix = [
+      case variants.gauss:
+        $matrix.matrix = [
           0.0625, 0.125, 0.0625,
-          0.125 , 0.5  , 0.125 ,
+          0.125 , 0.25  , 0.125 ,
           0.0625, 0.125, 0.0625
         ];
         return;
-      case Variant.edge:
-        matrixFilter.matrix = [
+      case variants.edge:
+        $matrix.matrix = [
           -1, -1, -1,
-          -1,  6, -1,
+          -1,  8, -1,
           -1, -1, -1
         ];
         return;
-      case Variant.sharpness:
-        matrixFilter.matrix = [
+      case variants.sharpness:
+        $matrix.matrix = [
           0.0 , -1.0,  0.0,
-          -1.0,    3, -1.0,
+          -1.0,    5, -1.0,
           0.0 , -1.0,  0.0
         ];
         return;
     }
   })
+
+  function reset() {
+    console.log('reset')
+    variant = variants.custom;
+    matrix.reset();
+  }
 </script>
 
 <div class="settings-group">
-  <Checkbox labelText="Linked size" bind:checked />
-  {#if checked}
+  <Checkbox labelText="Linked size" bind:checked={$matrix.isLinkedSize} />
+  {#if $matrix.isLinkedSize}
     <Slider
       labelText="Size"
       min={0}
       max={32}
       step={1}
-      bind:value={matrixFilter.size[0]}
+      bind:value={$matrix.size[0]}
     />
   {:else}
     <Slider
@@ -70,14 +70,14 @@
       min={0}
       max={32}
       step={1}
-      bind:value={matrixFilter.size[0]}
+      bind:value={$matrix.size[0]}
     />
     <Slider
       labelText="Size Y"
       min={0}
       max={32}
       step={1}
-      bind:value={matrixFilter.size[1]}
+      bind:value={$matrix.size[1]}
     />
   {/if}
   
@@ -86,7 +86,7 @@
       <RadioButtonGroup
         orientation="vertical"
         legendText={`Use ${name}`}
-        bind:selected={matrixFilter.useColors[key]}
+        bind:selected={$matrix.useColors[key]}
       >
         <RadioButton labelText="convolution" value={2} />
         <RadioButton labelText="sample" value={1} />
@@ -99,10 +99,10 @@
     legendText="Preset"
     bind:selected={variant}
   >
-    <RadioButton labelText="Emboss" value={Variant.embossing} />
-    <RadioButton labelText="Gauss" value={Variant.gauss} />
-    <RadioButton labelText="Edge" value={Variant.edge} />
-    <RadioButton labelText="Sharp" value={Variant.sharpness} />
+    <RadioButton labelText="Emboss" value={variants.embossing} />
+    <RadioButton labelText="Gauss" value={variants.gauss} />
+    <RadioButton labelText="Edge" value={variants.edge} />
+    <RadioButton labelText="Sharp" value={variants.sharpness} />
   </RadioButtonGroup>
 
   <div class="matrix-grid">
@@ -110,12 +110,12 @@
       <input 
         type="number"
         step={0.1}
-        bind:value={matrixFilter.matrix[item]}
+        bind:value={$matrix.matrix[item]}
       />
     {/each}
   </div>
 
-  <Reset reset={resetMatrix} />
+  <Reset reset={reset} />
 </div>
 
 

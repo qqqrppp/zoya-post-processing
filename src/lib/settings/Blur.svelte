@@ -1,9 +1,8 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  // import { Slider } from "carbon-components-svelte"; // TODO вернуть как было
   import Reset from "./_Reset.svelte";
 
-  import { blurFilter, resetBlur } from "./model.svelte";
+  import { blur } from "./model.svelte";
 </script>
 
 <div class="settings-group">
@@ -12,16 +11,15 @@
     min={0}
     max={96}
     step={1}
-    bind:value={blurFilter.filterSize}
+    bind:value={$blur.filterSize}
   />
-  <!-- bind:value={blurFilter.filterSize} -->
   <Slider
     labelText="Iterations"
     min={0}
     max={10}
     step={1}
-    bind:value={blurFilter.iterations}
+    bind:value={$blur.iterations}
   />
 
-  <Reset reset={resetBlur} />
+  <Reset reset={blur.reset} />
 </div>

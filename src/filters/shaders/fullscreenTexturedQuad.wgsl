@@ -6,15 +6,21 @@ struct VertexOutput {
   @location(0) fragUV : vec2f,
 }
 
+const x = 1.0;
+const y = 1.0;
+
 @vertex
 fn vert_main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
   const pos = array(
-    vec2( 1.0,  1.0),
-    vec2( 1.0, -1.0),
-    vec2(-1.0, -1.0),
-    vec2( 1.0,  1.0),
-    vec2(-1.0, -1.0),
-    vec2(-1.0,  1.0),
+    // right triangle
+    vec2( x,  y),
+    vec2( x, -y),
+    vec2(-x, -y),
+
+    // left triangle
+    vec2( x,  y),
+    vec2(-x, -y),
+    vec2(-x,  y),
   );
 
   const uv = array(

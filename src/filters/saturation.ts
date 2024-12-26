@@ -8,9 +8,9 @@ export enum Variant {
 }
 
 export enum SaturationColorFactor {
-    R = 0.21,
-    G = 0.72,
-    B = 0.07,
+    R = 21,
+    G = 72,
+    B = 7,
 }
 
 export type SaturationSettings = {
@@ -106,7 +106,7 @@ export class Saturation extends Filter<SaturationSettings> {
             this.device.queue.writeBuffer(
                 factorBuffer,
                 0,
-                new Float32Array(settings.colorFactor)
+                new Float32Array(settings.colorFactor.map(x => x / 100))
             );
 
             this.device.queue.writeBuffer(
