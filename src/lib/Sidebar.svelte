@@ -70,7 +70,7 @@
           </AccordionItem>
           <AccordionItem title="Inverse">
             <InverseSettings />
-          </AccordionItem>
+          </AccordionItem> 
         {/if}
 
         {#if selected == "effect"}
@@ -78,16 +78,17 @@
             <MatrixSettings />
           </AccordionItem>
 
-          <AccordionItem title="Pixelate">
+        <AccordionItem title="Pixelate">
             <PixelateSettings />
           </AccordionItem>
-
+   
           <AccordionItem title="Blur">
             <BlurSettings />
           </AccordionItem>
         {/if}
       </Accordion>
     </div>
+    div
   </Tile>
 </nav>
 

@@ -1,8 +1,11 @@
 import { isEqualArray } from '~/helpers';
 import { Filter } from './filter'
-import inverseWGSL from './shaders/inverse.wgsl?raw';
+// import inverseWGSL from './shaders/inverse.wgsl?raw';
+import inverseWGSL from './shaders/dither.wgsl?raw';
 
 export type InverseSettings = {
+    name: string,
+    isLinkedCoefficient: boolean,
     coefficient: [number, number, number], // from 0.0 to 1.0  
 }
 
@@ -61,17 +64,25 @@ export class Inverse extends Filter<InverseSettings> {
         });
 
         const update = (settings: InverseSettings) => {
+            const coefficient = settings.isLinkedCoefficient ? [
+                settings.coefficient[0],
+                settings.coefficient[0],
+                settings.coefficient[0],
+            ] : settings.coefficient
+
             this.device.queue.writeBuffer(
                 buffer,
                 0,
-                new Float32Array(settings.coefficient.map(x => x / 100))
+                new Float32Array(coefficient.map(x => x / 100))
             );
         }
 
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
         const compute = (commandEncoder: GPUCommandEncoder, settings: InverseSettings) => {
-            if (isEqualArray(settings.coefficient, [100,100,100])) return;
+            // console.log(settings)
+            // if (isEqualArray(settings.coefficient, [100,100,100])) return;
+
 
             update(settings);
 

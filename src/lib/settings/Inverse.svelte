@@ -1,7 +1,8 @@
 <script lang="ts">
   import { Checkbox } from "carbon-components-svelte";
   import Slider from "~/ui/Slider.svelte";
-  import Reset from "./_Reset.svelte";
+  import Reset from "~/ui/Reset.svelte";
+
   import { inverse } from "./model.svelte";
 
 </script>

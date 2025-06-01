@@ -1,6 +1,7 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  import Reset from "./_Reset.svelte";
+  import Reset from "~/ui/Reset.svelte";
+
   import { color } from "./model.svelte";
 </script>
 

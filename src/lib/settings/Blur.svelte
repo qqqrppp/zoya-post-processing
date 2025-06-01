@@ -1,6 +1,6 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  import Reset from "./_Reset.svelte";
+  import Reset from "~/ui/Reset.svelte";
 
   import { blur } from "./model.svelte";
 </script>

@@ -7,7 +7,7 @@
   import Slider from "~/ui/Slider.svelte";
   import { Variant } from "~/filters/saturation";
   import { saturation } from "./model.svelte";
-  import Reset from "./_Reset.svelte";
+  import Reset from "~/ui/Reset.svelte";
 
 </script>
 

@@ -27,6 +27,7 @@
     "@webgpu/types": "^0.1.51",
     "carbon-components-svelte": "^0.86.2",
     "carbon-icons-svelte": "^12.13.0",
-    "carbon-preprocess-svelte": "^0.11.8"
+    "carbon-preprocess-svelte": "^0.11.8",
+    "lodash": "^4.17.21"
   }
 }

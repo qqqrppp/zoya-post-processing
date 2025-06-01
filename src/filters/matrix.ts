@@ -3,6 +3,8 @@ import matrixWGSL from './shaders/matrix.wgsl?raw';
 import { mat3x3f } from '~/helpers';
 
 export type MatrixSettings = {
+    name: string,
+    isLinkedSize: boolean,
     size: [number, number], // 1 - 8
     useColors: [number, number, number], // 0 or 1 or 2 
     matrix: [
@@ -92,10 +94,11 @@ export class Matrix extends Filter<MatrixSettings> {
         });
 
         const update = (settings: MatrixSettings) => {
+            const size = settings.isLinkedSize ? [settings.size[0], settings.size[0]] : settings.size
             this.device.queue.writeBuffer(
                 sizeBuffer,
                 0,
-                new Int32Array(settings.size)
+                new Int32Array(size)
             );
 
             this.device.queue.writeBuffer(

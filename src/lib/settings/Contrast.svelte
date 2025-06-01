@@ -1,6 +1,7 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
-  import Reset from "./_Reset.svelte";
+  import Reset from "~/ui/Reset.svelte";
+
   import { contrast } from "./model.svelte";
 
   let color = $state($contrast.color[0])

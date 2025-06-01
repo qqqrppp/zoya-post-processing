@@ -2,6 +2,7 @@ import { Filter } from './filter'
 import colorCorrectionWGSL from './shaders/colorCorrection.wgsl?raw';
 
 export type ColorCorrectionSettings = {
+    name: string,
     color: [number, number, number], // from -100 - 100  
     reduction: [number, number, number], // from 0.0 to 1.0  
 }

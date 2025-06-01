@@ -76,9 +76,9 @@ export class Core {
 
         this.sampler = this.device.createSampler({
             // magFilter: 'nearest',// 'linear',
-            magFilter: 'linear',// 'linear',
+            magFilter: 'nearest',// 'linear',
 
-            minFilter: 'linear',// 'linear',
+            minFilter: 'nearest',// 'linear',
         });
 
         this.inputTexture = device.createTexture({

@@ -1,8 +1,24 @@
 <script lang="ts">
   import Slider from "~/ui/Slider.svelte";
   import { matrix } from "./model.svelte";
-  import { NumberInput, TextInput, Checkbox, RadioButton, RadioButtonGroup } from "carbon-components-svelte";
-  import Reset from "./_Reset.svelte";
+  import { NumberInput, TextInput, Checkbox, RadioButton, RadioButtonGroup, Button } from "carbon-components-svelte";
+  import Reset from "~/ui/Reset.svelte";
+
+  import Undo from "carbon-icons-svelte/lib/Undo.svelte";
+  import { derived } from "svelte/store";
+
+  // let size = $state($matrix.size[0])
+  // // $derived.by(() => {
+  // $effect(() => {
+  //   matrix.set({
+  //     ...matrix.value(),
+  //     size: [size, size]
+  //   })
+  // })
+
+  // matrix.subscribe(v => {
+  //   size = v.size[0]
+  // });
 
   const variants = {
     custom: 0,
@@ -48,7 +64,6 @@
   })
 
   function reset() {
-    console.log('reset')
     variant = variants.custom;
     matrix.reset();
   }
@@ -114,7 +129,7 @@
       />
     {/each}
   </div>
-
+  <Button size="small" kind="ghost" iconDescription="reset" icon={Undo} onclick={matrix.back} />
   <Reset reset={reset} />
 </div>
 

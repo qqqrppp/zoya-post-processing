@@ -3,27 +3,22 @@
   import { Core, Blur, Saturation, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
   import {
     pixelate,
-    blur,
-    saturation,
+    // blur,
+    // saturation,
     inverse,
-    color,
-    contrast,
+    // color,
+    // contrast,
     matrix,
+    history,
+    // filters,
+    // isMount,
   } from "./settings/model.svelte";
 
   let { file } = $props();
   let filter = $state<Core>();
 
   const render = () => {
-    filter?.view({
-      [Matrix.name]: $matrix,
-      [Blur.name]: $blur,
-      [Saturation.name]: $saturation,
-      [Pixelate.name]: $pixelate,
-      [Inverse.name]: $inverse,
-      [ColorCorrection.name]: $color,
-      [Contrast.name]: $contrast,
-    });
+    filter?.view(history.filters);
   };
 
   $effect(render)
@@ -68,12 +63,35 @@
     }
 
     await create(canvas);
+
+    // await tick();
+
+    // $isMount = true;
+
   });
+
+  // <!-- { JSON.stringify(history.filters) } -->
+ 
 </script>
 
 <div class="wrapper">
-  <canvas bind:this={canvas}></canvas>
+  <canvas bind:this={canvas}></canvas>  
+  <!-- <pre>
+    { JSON.stringify(history.filters) }
+  </pre>
+
+   <div>
+    {#each history.list as h, i}
+    <p>
+      {#if i + 1 == history.position}
+      ->
+      {/if}
+      {JSON.stringify(h)}
+    </p>
+  {/each}
+  </div> -->
 </div>
+
 
 <style>
   canvas {

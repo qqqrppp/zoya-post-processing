@@ -49,21 +49,22 @@ fn main(
             let x = u32((j + size.x) / size.x);
 
             color += sampleColor * matrix[y][x];
+            color.a = sampleColor.a;
 
             if use_color.r == 0 {
-                color.r = 0;
+                color.r = 0.0;
             } else if use_color.r == 1 {
                 color.r = sampleColor.r;
             }
 
             if use_color.g == 0 {
-                color.g = 0;
+                color.g = 0.0;
             } else if use_color.g == 1 {
                 color.g = sampleColor.g;
             }
 
             if use_color.b == 0 {
-                color.b = 0;
+                color.b = 0.0;
             } else if use_color.b == 1 {
                 color.b = sampleColor.b;
             }

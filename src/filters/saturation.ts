@@ -14,7 +14,9 @@ export enum SaturationColorFactor {
 }
 
 export type SaturationSettings = {
+    name: string,
     variant: Variant, // 1 - lightness, 2 - average, 3 - luminosity
+    isLinkedCoefficient: boolean,
     coefficient: [number, number, number], // from 0.0 to 1.0  
     colorFactor: [number, number, number], // from 0.0 to 1.0  
 }
@@ -109,10 +111,16 @@ export class Saturation extends Filter<SaturationSettings> {
                 new Float32Array(settings.colorFactor.map(x => x / 100))
             );
 
+            const coefficient = settings.isLinkedCoefficient ? [
+                settings.coefficient[0], 
+                settings.coefficient[0], 
+                settings.coefficient[0]
+            ] : settings.coefficient
+
             this.device.queue.writeBuffer(
                 coeffsBuffer,
                 0,
-                new Float32Array(settings.coefficient)
+                new Float32Array(coefficient)
             );           
         }
 

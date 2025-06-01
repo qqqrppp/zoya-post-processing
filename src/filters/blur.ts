@@ -2,6 +2,7 @@ import { Filter } from './filter'
 import blurWGSL from './shaders/blur.wgsl?raw';
 
 export type BlurSettings = {
+    name: string,
     filterSize: number,
     iterations: number,
 }

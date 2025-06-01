@@ -8,6 +8,14 @@ export const isEqualArray = (a: number[], b: number[]): boolean => {
     return true;
 }
 
+export const isEqualObject = (a: Record<string, unknown>, b: Record<string, unknown>): boolean => {
+    // if (a === b) {
+    //     return true;
+    // }
+
+    return JSON.stringify(a) == JSON.stringify(b)
+}
+
 const matrixCxRs = (c: number, r: number, s: 'i' | 'f' | 'u' = 'i') =>  {
     const arr = Array.from({ length: c * r + r }, () => 0)
     const matrixTemplate = {

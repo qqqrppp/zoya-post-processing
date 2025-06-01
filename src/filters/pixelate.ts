@@ -3,6 +3,7 @@ import pixelateWGSL from './shaders/pixelate.wgsl?raw';
 
 
 export type PixelateSettings = {
+    name: string,
     pixelSize: number, // 1,2,3..16..32 to resolution
 }
 
