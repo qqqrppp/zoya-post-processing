@@ -6,6 +6,7 @@ import type {
   InverseSettings,
   PixelateSettings,
   ColorCorrectionSettings,
+  PosterizationSettings,
 } from "~/filters";
 import {
   Core,
@@ -23,6 +24,8 @@ import { onMount, tick, untrack } from "svelte";
 import debounce from "lodash/debounce";
 import throttle from "lodash/throttle"
 import { isEqualObject } from "~/helpers";
+import { SimpleDither, type SimpleDitherSettings } from "~/filters/simpleDither";
+import { Posterization } from "~/filters/posterization";
 
 type Settings = (
   | BlurSettings
@@ -31,6 +34,7 @@ type Settings = (
   | PixelateSettings
   | ColorCorrectionSettings
   | MatrixSettings
+  | SimpleDitherSettings
 );
 
 //---------------Pixelate State-----------------------------
@@ -89,6 +93,21 @@ const initMatrix: MatrixSettings = {
   matrix: [0, 0, 0, 0, 1, 0, 0, 0, 0],
 };
 
+const initSimpleDither: SimpleDitherSettings = {
+  name: SimpleDither.name,
+  variant: 0,
+  isLinkedLevel: true,
+  levels: [4,4,4],
+  equalizing: 0.5,
+}
+
+const initPosterization: PosterizationSettings = {
+  name: Posterization.name,
+  variant: 0,
+  isLinkedLevel: true,
+  levels: [0,0,0],
+}
+
 function createFilter<T extends Settings>(settings: T) {
   const history: T[] = [structuredClone(settings), structuredClone(settings)];
   const init = structuredClone(settings);
@@ -106,7 +125,6 @@ function createFilter<T extends Settings>(settings: T) {
 
   const reset = () => {
     untrack(() => { // todo: нужен ли он???
-      console.log(init)
       current.set(structuredClone(init));
       history[0] = structuredClone(init)
       history[1] = structuredClone(init)
@@ -168,6 +186,9 @@ const saturation = createFilter(initSaturation);
 const inverse = createFilter(initInverse);
 const color = createFilter(initColor);
 const contrast = createFilter(initContrast);
+const simpleDither = createFilter(initSimpleDither)
+const posterization = createFilter(initPosterization)
+
 
 // const filters = {
 //   [Pixelate.name]: pixelate
@@ -195,6 +216,8 @@ function createHistory() {
     inverse,
     color,
     contrast,
+    simpleDither,
+    posterization
   ]
 
   const currentFilter = $derived.by(() => {
@@ -216,12 +239,11 @@ function createHistory() {
 
   //   return newFilters
   // })
-  // todo не удалять а двишаться по истории вверх вниз
+  // todo не удалять а двигаться по истории вверх вниз
   // после update стираем историю до индекса для конкретного фильтра если наш индекс ниже чем значение фильтра
 
 
   const back = () => {
-    // console.log('start', position, list.length)
     if (position > 1) {
       position -= 1;
 
@@ -239,7 +261,6 @@ function createHistory() {
       position = newList.length
       list = [...newList]
     } else {
-      console.log(123)
       filters.forEach(x => x.reset())
       position = 0
       list = []
@@ -252,10 +273,10 @@ function createHistory() {
       return
   };
 
-  const debounceUpdateHistory = throttle(updateHistory, 100);
+  const throttleUpdateHistory = throttle(updateHistory, 200);
 
   for (let filter of filters) {
-    filter.sub(updateHistory);
+    filter.sub(throttleUpdateHistory);
   }
 
   return {
@@ -290,4 +311,6 @@ export {
   inverse,
   color,
   contrast,
+  simpleDither,
+  posterization,
 };

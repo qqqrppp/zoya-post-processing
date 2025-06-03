@@ -1,38 +1,70 @@
 import { isEqualArray } from '~/helpers';
 import { Filter } from './filter'
-import inverseWGSL from './shaders/inverse.wgsl?raw';
+import simpleDitherWGSL from './shaders/simpleDither.wgsl?raw';
 
-export type InverseSettings = {
-    name: string,
-    isLinkedCoefficient: boolean,
-    coefficient: [number, number, number], // from 0.0 to 1.0  
+export enum Variant {
+    disable = 0,
+    grid4x4 = 1,
+    grid8x8 = 2,
+    grid16x16 = 3,
 }
 
-export class Inverse extends Filter<InverseSettings> {
+export type SimpleDitherSettings = {
+    name: string,
+    variant: Variant,
+    isLinkedLevel: boolean,
+    levels: [number, number, number],
+    equalizing: number,
+}
+
+
+export class SimpleDither extends Filter<SimpleDitherSettings> {
     init() {
         const pipeline = this.device.createComputePipeline({
             layout: 'auto',
             compute: {
                 module: this.device.createShaderModule({
-                    code: inverseWGSL,
+                    code: simpleDitherWGSL,
                 }),
                 // entryPoint: "main"
             },
         });
 
-        const buffer = this.device.createBuffer({
+        let variantBuffer = this.device.createBuffer({
+            size: 4,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+        });
+
+        let levelBuffer = this.device.createBuffer({
             size: 16,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+        });
+
+        let equalizingBuffer = this.device.createBuffer({
+            size: 4,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
 
         const computeConstants = this.device.createBindGroup({
-            label: "inverse buffer group",
+            label: "simple dither buffer group",
             layout: pipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
                     resource: {
-                        buffer,
+                        buffer: variantBuffer,
+                    }
+                },
+                {
+                    binding: 1,
+                    resource: {
+                        buffer: levelBuffer,
+                    }
+                },
+                {
+                    binding: 2,
+                    resource: {
+                        buffer: equalizingBuffer,
                     }
                 },
             ],
@@ -41,14 +73,14 @@ export class Inverse extends Filter<InverseSettings> {
         const intermediateTexture = this.device.createTexture({
             size: [this.imageBitmap.width, this.imageBitmap.height],
             format: 'rgba8unorm',
-            usage:        
+            usage:
                 GPUTextureUsage.COPY_SRC
                 | GPUTextureUsage.STORAGE_BINDING
                 | GPUTextureUsage.TEXTURE_BINDING
         });
 
         const computeBindGroup = this.device.createBindGroup({
-            label: "inverse compute group",
+            label: "simple dither compute group",
             layout: pipeline.getBindGroupLayout(1),
             entries: [
                 {
@@ -62,35 +94,49 @@ export class Inverse extends Filter<InverseSettings> {
             ],
         });
 
-        const update = (settings: InverseSettings) => {
-            const coefficient = settings.isLinkedCoefficient ? [
-                settings.coefficient[0],
-                settings.coefficient[0],
-                settings.coefficient[0],
-            ] : settings.coefficient
+        const update = (settings: SimpleDitherSettings) => {
+            this.device.queue.writeBuffer(
+                variantBuffer,
+                0,
+                new Uint32Array([settings.variant])
+            );
+
+            const levels = settings.isLinkedLevel ? [
+                settings.levels[0],
+                settings.levels[0],
+                settings.levels[0],
+            ] : settings.levels
 
             this.device.queue.writeBuffer(
-                buffer,
+                levelBuffer,
                 0,
-                new Float32Array(coefficient.map(x => x / 100))
+                new Float32Array(levels)
+            );
+
+            this.device.queue.writeBuffer(
+                equalizingBuffer,
+                0,
+                new Float32Array([settings.equalizing])
             );
         }
 
+
         const [w, h] = this.computeWorkGroupCount([this.imageBitmap.width, this.imageBitmap.height], [16, 16])
 
-        const compute = (commandEncoder: GPUCommandEncoder, settings: InverseSettings) => {
-            if (isEqualArray(settings.coefficient, [100,100,100])) return;
+        const compute = (commandEncoder: GPUCommandEncoder, settings: SimpleDitherSettings) => {
+            if (!settings.variant) return;
 
             update(settings);
 
             const computePass = commandEncoder.beginComputePass({
-                label: 'inverse pass'
+                label: "dither pass"
             });
 
             computePass.setPipeline(pipeline);
             computePass.setBindGroup(0, computeConstants);
 
             computePass.setBindGroup(1, computeBindGroup);
+
 
             computePass.dispatchWorkgroups(
                 Math.ceil(w),

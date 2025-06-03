@@ -6,12 +6,16 @@ import { Pixelate, type PixelateSettings } from './pixelate'
 import { Inverse, type InverseSettings } from './inverse'
 import { Contrast, ColorCorrection, type ColorCorrectionSettings } from './colorCorrection'
 import { Matrix } from './matrix';
-export { type BlurSettings, Blur } 
+import { SimpleDither } from './simpleDither';
+import { Posterization, type PosterizationSettings } from './posterization';
+
+export { type BlurSettings, Blur }
 export { type SaturationSettings, SaturationColorFactor, Saturation }
 export { type PixelateSettings, Pixelate }
 export { type InverseSettings, Inverse }
 export { type ColorCorrectionSettings, ColorCorrection }
 export { Contrast, Matrix }
+export { type PosterizationSettings }
 
 const filters = [
     Blur,
@@ -21,6 +25,8 @@ const filters = [
     ColorCorrection,
     Contrast,
     Matrix,
+    SimpleDither,
+    Posterization
 ] as const
 
 type Filters = InstanceType<(typeof filters)[number]>
@@ -47,32 +53,15 @@ export class Core {
         device: GPUDevice,
         format: GPUTextureFormat,
         imageBitmap: ImageBitmap,
+        viewport,
+        clearValue,
     ) {
-
-        const width = 10;
-        const height = 10;
-        const _ = [255,   0,   0, 255];  // red
-        const y = [255, 255,   0, 255];  // yellow
-        const b = [  0,   0, 255, 255];  // blue
-        const g = [  0, 255,   0, 255];  // green
-        const textureData = new Uint8Array([
-          b, _, _, _, _, _, _, _, _, _,
-          _, y, y, y, _, _, _, _, _, _,
-          _, y, g, _, _, _, g, g, b, _,
-          _, y, y, g, _, _, g, g, b, _,
-          _, y, g, _, _, _, _, _, _, _,
-          _, y, _, _, _, _, g, g, b, _,
-          _, _, _, _, _, _, g, g, b, _,
-          _, _, _, _, _, _, g, g, b, _,
-          _, _, _, _, _, _, g, g, b, _,
-          _, _, _, _, _, _, _, _, _, _,
-        ].flat());
-
+        this.viewport = viewport
+        this.clearValue = clearValue
         this.context = context;
         this.device = device;
         this.format = format;
         this.imageBitmap = imageBitmap
-        // this.imageBitmap = { width,  height, };
 
         this.sampler = this.device.createSampler({
             // magFilter: 'nearest',// 'linear',
@@ -86,8 +75,8 @@ export class Core {
             format: 'rgba8unorm',
             usage:
                 GPUTextureUsage.TEXTURE_BINDING
-                | GPUTextureUsage.COPY_DST
                 | GPUTextureUsage.RENDER_ATTACHMENT
+                | GPUTextureUsage.COPY_DST
                 | GPUTextureUsage.COPY_SRC
 
         });
@@ -97,16 +86,12 @@ export class Core {
             format: 'rgba8unorm',
             usage:
                 GPUTextureUsage.COPY_DST
+                | GPUTextureUsage.COPY_SRC
                 | GPUTextureUsage.STORAGE_BINDING
                 | GPUTextureUsage.TEXTURE_BINDING
         });
 
-        // device.queue.writeTexture(
-        //     { texture: this.inputTexture },
-        //     textureData,
-        //     { bytesPerRow: width * 4 },
-        //     { width, height },
-        // );
+
         this.device.queue.copyExternalImageToTexture(
             { source: this.imageBitmap },
             { texture: this.inputTexture },
@@ -182,19 +167,57 @@ export class Core {
                 colorAttachments: [
                     {
                         view: this.context.getCurrentTexture().createView(),
-                        clearValue: [128, 0, 0, 0],
+                        clearValue: this.clearValue,
                         loadOp: 'clear',
                         storeOp: 'store',
                     },
                 ],
             });
 
+            passEncoder.setViewport(
+                this.viewport.x,
+                this.viewport.y,
+                this.viewport.width,
+                this.viewport.height,
+                0,
+                1
+            )
             passEncoder.setPipeline(fullscreenQuadPipeline);
             passEncoder.setBindGroup(0, showResultBindGroup);
             passEncoder.draw(6);
             passEncoder.end();
             this.device.queue.submit([this.commandEncoder.finish()]);
         }
+    }
+
+    async upload(): Promise<Uint8Array<ArrayBuffer>> {
+        const bufferSize = this.imageBitmap.width * this.imageBitmap.height * 4; // RGBA, 4 байта на пиксель
+        const outputBuffer = this.device.createBuffer({
+            size: bufferSize,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
+        });
+
+        // Копируем текстуру в буфер
+        const commandEncoder = this.device.createCommandEncoder();
+        commandEncoder.copyTextureToBuffer(
+            { texture: this.outputTexture },
+            {
+                buffer: outputBuffer,
+                bytesPerRow: this.imageBitmap.width * 4,
+                rowsPerImage: this.imageBitmap.height
+            },
+            { width: this.imageBitmap.width, height: this.imageBitmap.height }
+        );
+
+        this.device.queue.submit([commandEncoder.finish()]);
+
+        // Читаем данные из буфера
+        await outputBuffer.mapAsync(GPUMapMode.READ);
+        const arrayBuffer = new Uint8Array(outputBuffer.getMappedRange());
+        const copy = new Uint8Array(arrayBuffer); // Создаем копию данных
+        // outputBuffer.unmap(); // как очистить ресы 
+
+        return copy;
     }
 
     view(settings?: Record<FilterName, FilterSettings>) {
@@ -207,7 +230,7 @@ export class Core {
                     // @ts-ignore todo: невозможно описать что для FilterName есть свой FilterSettings
                     settings[key]
                 );
-            } 
+            }
         }
 
         this.render();

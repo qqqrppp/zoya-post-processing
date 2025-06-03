@@ -1,12 +1,21 @@
-struct Coefficient {
+struct Color {
     r: f32,
     g: f32,
     b: f32,
 }
-@group(0) @binding(0) var<uniform> coeffs : Coefficient;
+@group(0) @binding(0) var<uniform> variant : u32; // 1 - 4x4, 2 - average8x8, 3 - 16x16
+@group(0) @binding(1) var<uniform> level : Color; 
 
 @group(1) @binding(0) var input_texture : texture_2d<f32>;
 @group(1) @binding(1) var output_texture : texture_storage_2d<rgba8unorm, write>;
+
+const indexMatrix4x4 = mat4x4(
+    0,  8,  2,  10,
+    12, 4,  14, 6,
+    3,  11, 1,  9,
+    15, 7,  13, 5
+);
+
 
 @compute @workgroup_size(16, 16)
 fn main(
@@ -15,7 +24,8 @@ fn main(
     let dimensions = textureDimensions(input_texture);
     let coords = vec2i(global_id.xy);
 
-    let coef = coeffs;
+    let vari = variant;
+    let lvl = level;
 
     if(u32(global_id.x) >= dimensions.x || u32(global_id.y) >= dimensions.y) {
       return;
@@ -31,12 +41,6 @@ fn main(
 	// 	3, -1, 2, -2
     // );
 
-    let indexMatrix4x4 = array<i32, 16>(
-        0,  8,  2,  10,
-        12, 4,  14, 6,
-        3,  11, 1,  9,
-        15, 7,  13, 5
-    );
 
     var color = textureLoad(input_texture, vec2i(global_id.xy), 0);
     var closestColor = (color.r + color.g + color.b) / 3.0;
@@ -50,7 +54,7 @@ fn main(
 
     // let x = i32(mod(coords.x, 4));
     // let y = i32(mod(coords.y, 4));
-    let d = f32(indexMatrix4x4[(x + y * 4)]) / dithering_size;
+    let d = f32(indexMatrix4x4[x + y * 4.0]) / dithering_size;
     let distance = abs(closestColor - color);
 
     var qqq = 0.0;

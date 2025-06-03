@@ -10,11 +10,13 @@
   import ColorCorrectionSettings from "./settings/ColorCorrection.svelte";
   import ContrastSettings from "./settings/Contrast.svelte";
   import MatrixSettings from "./settings/Matrix.svelte";
+  import DitherSettings from "./settings/DitherSettings.svelte"
 
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
   import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
   import SaveSeries from "carbon-icons-svelte/lib/WatsonHealthSaveSeries.svelte";
   import Contrast from "carbon-icons-svelte/lib/Contrast.svelte";
+  import Posterization from "./settings/Posterization.svelte";
 
   let selected = $state("effect");
   let items = $state([
@@ -43,7 +45,7 @@
 
 </script>
 
-<nav class="sidebar">
+<nav class="sidebar z-1">
   <ul class="sidebar-mini">
     {#each items as item}
       <SidebarItem
@@ -78,17 +80,22 @@
             <MatrixSettings />
           </AccordionItem>
 
-        <AccordionItem title="Pixelate">
+          <AccordionItem title="Pixelate">
             <PixelateSettings />
           </AccordionItem>
    
           <AccordionItem title="Blur">
             <BlurSettings />
           </AccordionItem>
+          <AccordionItem title="Dither">
+            <DitherSettings />
+          </AccordionItem>
+          <AccordionItem title="Posterization">
+            <Posterization />
+          </AccordionItem>
         {/if}
       </Accordion>
     </div>
-    div
   </Tile>
 </nav>
 

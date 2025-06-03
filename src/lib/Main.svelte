@@ -4,32 +4,29 @@
   import { FileUploaderDropContainer } from "carbon-components-svelte";
   import { history } from "./settings/model.svelte";
   import Reset from "~/ui/Reset.svelte";
-  
+
   let files = $state<File[]>([]);
 </script>
 
-<div class="wrapper">
-  <div class="flex justify-start w-full">
-    <Undo undo={history.back} />
-    <Reset reset={() => history.reset()}/>
-  </div>
-  <div>
-    {#if !!files.length}
-      <CanvasGpu file={files[0]} />
-    {:else}
-      <FileUploaderDropContainer
-        labelText="Drag and drop files here or click to upload"
-        accept={[".jpg", ".jpeg", ".png"]}
-        validateFiles={(files) => {
-          // ограничение брать из gpu выкидывать алерт
-          // return files.filter((file) => file.size > 8_192);
-          return files;
-        }}
-        bind:files
-      />
-    {/if}
-  </div>
-  <div></div>
+<div class="w-full">
+  {#if !!files.length}
+    <CanvasGpu file={files[0]} />
+  {:else}
+    <div class="flex h-full w-full justify-center items-center">
+      <div>
+        <FileUploaderDropContainer
+          labelText="Drag and drop files here or click to upload"
+          accept={[".jpg", ".jpeg", ".png"]}
+          validateFiles={(files) => {
+            // ограничение брать из gpu выкидывать алерт
+            // return files.filter((file) => file.size > 8_192);
+            return files;
+          }}
+          bind:files
+        />
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>

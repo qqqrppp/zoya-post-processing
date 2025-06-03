@@ -1,18 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { Core, Blur, Saturation, Inverse, ColorCorrection, Contrast, Pixelate, Matrix } from "~/filters";
-  import {
-    pixelate,
-    // blur,
-    // saturation,
-    inverse,
-    // color,
-    // contrast,
-    matrix,
-    history,
-    // filters,
-    // isMount,
-  } from "./settings/model.svelte";
+  import { Core } from "~/filters";
+  import { history } from "./settings/model.svelte";
+  import { hexToRgbA, rgbaToFloat } from "~/helpers";
+  import Undo from "~/ui/Undo.svelte";
+  import Reset from "~/ui/Reset.svelte";
+  import Download from "~/ui/Download.svelte";
 
   let { file } = $props();
   let filter = $state<Core>();
@@ -21,7 +14,7 @@
     filter?.view(history.filters);
   };
 
-  $effect(render)
+  $effect(render);
 
   let canvas: HTMLCanvasElement;
   let bitMap: ImageBitmap;
@@ -53,7 +46,62 @@
       format: presentationFormat,
     });
 
-    filter = new Core(context, device, presentationFormat, bitMap);
+    const viewport = getAdjustedViewport(canvas, bitMap);
+    const color = window
+      .getComputedStyle(document.body)
+      .getPropertyValue("--cds-ui-background");
+
+    filter = new Core(
+      context,
+      device,
+      presentationFormat,
+      bitMap,
+      viewport,
+      rgbaToFloat(hexToRgbA(color))
+    );
+  }
+
+  async function saveTexture() {
+    const pixelData = await filter!.upload();
+    const canvas = new OffscreenCanvas(bitMap.width, bitMap.height);
+    const context = canvas.getContext("2d");
+    const imageData = context!.createImageData(bitMap.width, bitMap.height);
+
+    // WebGPU использует формат RGBA, но ImageData тоже, так что можно копировать напрямую
+    imageData.data.set(pixelData);
+
+    context.putImageData(imageData, 0, 0);
+
+    const blob = await canvas.convertToBlob({ type: "image/png" });
+    const url = URL.createObjectURL(blob);
+
+    window.open(url, "_blank");
+
+    // Освобождаем память
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }
+
+  function getAdjustedViewport(canvas, bitMap) {
+    const imageAspect = bitMap.width / bitMap.height;
+    const canvasAspect = canvas.width / canvas.height;
+    let viewportWidth, viewportHeight;
+
+    if (canvasAspect > imageAspect) {
+      // Холст шире изображения
+      viewportHeight = canvas.height;
+      viewportWidth = canvas.height * imageAspect;
+    } else {
+      // Холст уже изображения
+      viewportWidth = canvas.width;
+      viewportHeight = canvas.width / imageAspect;
+    }
+
+    return {
+      x: (canvas.width - viewportWidth) / 2,
+      y: (canvas.height - viewportHeight) / 2,
+      width: viewportWidth,
+      height: viewportHeight,
+    };
   }
 
   onMount(async () => {
@@ -63,40 +111,46 @@
     }
 
     await create(canvas);
-
-    // await tick();
-
-    // $isMount = true;
-
   });
 
-  // <!-- { JSON.stringify(history.filters) } -->
- 
+  let size = $state(800);
+
+  function changingsize(event: WheelEvent) {
+    let direction = event.deltaY > 0 ? -1 : 1;
+    let counter = 100;
+
+    if (size > 200 && direction == -1) {
+      size -= counter;
+    } else if (direction == 1) {
+      size += counter;
+    }
+  }
 </script>
 
-<div class="wrapper">
-  <canvas bind:this={canvas}></canvas>  
-  <!-- <pre>
-    { JSON.stringify(history.filters) }
-  </pre>
+<div
+  onwheel={changingsize}
+  class="relative flex flex-col h-full justify-between overflow-hidden"
+>
+  <div class="flex justify-between w-full z-1 overflow-hidden">
+    <Undo undo={history.back} />
+    <Reset reset={() => history.reset()} />
+  </div>
+  <canvas
+    class="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[-1]"
+    bind:this={canvas}
+    style={`--size: ${size}px`}
+  ></canvas>
 
-   <div>
-    {#each history.list as h, i}
-    <p>
-      {#if i + 1 == history.position}
-      ->
-      {/if}
-      {JSON.stringify(h)}
-    </p>
-  {/each}
-  </div> -->
+  <div class="flex justify-between w-full z-1 overflow-hidden">
+    <div></div>
+    <Download download={saveTexture} />
+  </div>
 </div>
-
 
 <style>
   canvas {
-    width: 500px;
-    height: 500px;
+    width: var(--size);
+    height: var(--size);
     color: #888;
   }
 </style>
