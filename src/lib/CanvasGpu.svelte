@@ -135,11 +135,7 @@
     <Undo undo={history.back} />
     <Reset reset={() => history.reset()} />
   </div>
-  <canvas
-    class="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[-1]"
-    bind:this={canvas}
-    style={`--size: ${size}px`}
-  ></canvas>
+  <canvas bind:this={canvas} style={`--size: ${size}px`}></canvas>
 
   <div class="flex justify-between w-full z-1 overflow-hidden">
     <div></div>
@@ -149,6 +145,11 @@
 
 <style>
   canvas {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: var(--size);
     height: var(--size);
     color: #888;
