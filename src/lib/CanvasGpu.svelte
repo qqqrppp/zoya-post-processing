@@ -6,6 +6,7 @@
   import Undo from "~/ui/Undo.svelte";
   import Reset from "~/ui/Reset.svelte";
   import Download from "~/ui/Download.svelte";
+  import debounce from "lodash/debounce";
 
   let { file } = $props();
   let filter = $state<Core>();
@@ -72,7 +73,7 @@
 
     context.putImageData(imageData, 0, 0);
 
-    const blob = await canvas.convertToBlob({ type: "image/png" });
+    const blob = await canvas.convertToBlob({ type: file.type });
     const url = URL.createObjectURL(blob);
 
     window.open(url, "_blank");
@@ -114,6 +115,7 @@
   });
 
   let size = $state(800);
+  const recreate = debounce(create, 250);
 
   function changingsize(event: WheelEvent) {
     let direction = event.deltaY > 0 ? -1 : 1;
@@ -121,10 +123,16 @@
 
     if (size > 200 && direction == -1) {
       size -= counter;
-    } else if (direction == 1) {
+    } else if (size < 4000 && direction == 1) {
       size += counter;
     }
+
+    // TODO: неоптимально
+    requestAnimationFrame(
+      recreate(canvas)
+    )
   }
+
 </script>
 
 <div
