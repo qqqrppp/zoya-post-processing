@@ -261,9 +261,10 @@
 
 <div class="relative flex flex-col h-full justify-between overflow-hidden">
   <div class="flex justify-between w-full z-1">
-    <Undo undo={history.back} />
-    <Reset reset={() => history.reset()} />
+    <!-- <Undo undo={history.back} />
+    <Reset reset={() => history.reset()} /> -->
   </div>
+  <!-- {JSON.stringify(history)} -->
   <canvas
     bind:this={canvas}
     style={`--size: ${size}px`}

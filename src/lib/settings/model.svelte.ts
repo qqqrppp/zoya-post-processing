@@ -196,7 +196,7 @@ function createFilter<T extends Settings>(settings: T) {
     reset,
     untrackSet,
     get current() {
-      return history[1]; 
+      return history[1];
     },
     get prev() {
       return history[0];
