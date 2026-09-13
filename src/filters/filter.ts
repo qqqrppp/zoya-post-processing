@@ -40,5 +40,10 @@ export abstract class Filter<T> {
         return [x, y]
     }
 
+    // abstract setBuffers(): void;
+
+    // abstract guard(settings: T): boolean;
+
+
     abstract init(): (commandEncoder: GPUCommandEncoder, settings: T) => void;
 }

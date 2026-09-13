@@ -6,5 +6,5 @@
   </script>
   
   <div class="flex justify-start">
-      <Button size="field" kind="ghost" iconDescription="reset" icon={Undo} onclick={undo} />
+      <Button size="field" kind="ghost" iconDescription="undo" tooltipPosition="right" icon={Undo} onclick={undo} />
   </div>

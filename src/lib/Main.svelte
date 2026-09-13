@@ -28,13 +28,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  .wrapper {
-    display: flex;
-    flex-flow: column;
-    width: 100%;
-    justify-content: space-between;
-    align-items: center;
-  }
-</style>

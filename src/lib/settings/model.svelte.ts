@@ -2,6 +2,7 @@ import { derived, readable, toStore, writable } from "svelte/store";
 import { SaturationColorFactor } from "~/filters/index";
 import type {
   BlurSettings,
+  GaussianBlurSettings,
   SaturationSettings,
   InverseSettings,
   PixelateSettings,
@@ -11,12 +12,15 @@ import type {
 import {
   Core,
   Blur,
+  GaussianBlur,
   Saturation,
   Inverse,
   ColorCorrection,
   Contrast,
   Pixelate,
   Matrix,
+  Brush,
+  type BrushSettings,
 } from "~/filters";
 
 import type { MatrixSettings } from "~/filters/matrix";
@@ -29,23 +33,44 @@ import { Posterization } from "~/filters/posterization";
 
 type Settings = (
   | BlurSettings
+  | GaussianBlurSettings
   | SaturationSettings
   | InverseSettings
   | PixelateSettings
   | ColorCorrectionSettings
   | MatrixSettings
   | SimpleDitherSettings
+  | PosterizationSettings
+  | BrushSettings
 );
 
 //---------------Pixelate State-----------------------------
 const initPixelate: PixelateSettings = {
   name: Pixelate.name,
   pixelSize: 0,
+  variant: 0,
+};
+
+//---------------Brush State-----------------------------
+const initBrush: BrushSettings = {
+  name: Brush.name,
+  radius: 0,
+  variant: 0,
+  hardness: 8,
+  stretching: 1.0,
+  opacity: 1.0,
 };
 
 //---------------Blur State-----------------------------
 const initBlur: BlurSettings = {
   name: Blur.name,
+  filterSize: 0,
+  iterations: 0,
+};
+
+//---------------GaussianBlur State-----------------------------
+const initGaussianBlur: GaussianBlurSettings = {
+  name: GaussianBlur.name,
   filterSize: 0,
   iterations: 0,
 };
@@ -97,16 +122,19 @@ const initSimpleDither: SimpleDitherSettings = {
   name: SimpleDither.name,
   variant: 0,
   isLinkedLevel: true,
-  levels: [4,4,4],
-  equalizing: 0.5,
-}
+  levels: [4, 4, 4],
+  equalizing: 0.0,
+  scale: 1.0,
+  monochrome: false,
+};
 
 const initPosterization: PosterizationSettings = {
   name: Posterization.name,
   variant: 0,
   isLinkedLevel: true,
-  levels: [0,0,0],
-}
+  levels: [4, 4, 4],
+  palette: 0,
+};
 
 function createFilter<T extends Settings>(settings: T) {
   const history: T[] = [structuredClone(settings), structuredClone(settings)];
@@ -181,6 +209,7 @@ function createFilter<T extends Settings>(settings: T) {
 
 const pixelate = createFilter(initPixelate);
 const blur = createFilter(initBlur);
+const gaussianBlur = createFilter(initGaussianBlur);
 const matrix = createFilter(initMatrix);
 const saturation = createFilter(initSaturation);
 const inverse = createFilter(initInverse);
@@ -188,6 +217,7 @@ const color = createFilter(initColor);
 const contrast = createFilter(initContrast);
 const simpleDither = createFilter(initSimpleDither)
 const posterization = createFilter(initPosterization)
+const brush = createFilter(initBrush)
 
 
 // const filters = {
@@ -212,12 +242,14 @@ function createHistory() {
     pixelate,
     matrix,
     blur,
+    gaussianBlur,
     saturation,
     inverse,
     color,
     contrast,
     simpleDither,
-    posterization
+    posterization,
+    brush
   ]
 
   const currentFilter = $derived.by(() => {
@@ -247,7 +279,7 @@ function createHistory() {
     if (position > 1) {
       position -= 1;
 
-      currentFilter?.untrackSet($state.snapshot(current))
+      (currentFilter as any)?.untrackSet($state.snapshot(current))
     } else {
       reset()
     }
@@ -273,7 +305,7 @@ function createHistory() {
       return
   };
 
-  const throttleUpdateHistory = throttle(updateHistory, 200);
+  const throttleUpdateHistory = throttle(updateHistory, 100);
 
   for (let filter of filters) {
     filter.sub(throttleUpdateHistory);
@@ -306,6 +338,7 @@ export {
   history,
   pixelate,
   blur,
+  gaussianBlur,
   matrix,
   saturation,
   inverse,
@@ -313,4 +346,5 @@ export {
   contrast,
   simpleDither,
   posterization,
+  brush,
 };

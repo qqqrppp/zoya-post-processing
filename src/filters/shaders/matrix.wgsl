@@ -12,8 +12,8 @@ struct Color {
 }
 
 @group(0) @binding(0) var<uniform> size : Position;
-@group(0) @binding(1) var<uniform> use_color : Color;
-@group(0) @binding(2) var<uniform> matrix : mat3x3f;
+@group(0) @binding(1) var<uniform> matrix : mat3x3f;
+@group(0) @binding(2) var<uniform> use_color : Color;
 
 @group(1) @binding(0) var inputTexture : texture_2d<f32>;
 @group(1) @binding(1) var outputTexture : texture_storage_2d<rgba8unorm, write>;

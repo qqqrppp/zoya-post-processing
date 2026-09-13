@@ -6,5 +6,5 @@
   </script>
   
   <div class="flex justify-end">
-      <Button size="field" kind="ghost" iconDescription="reset" icon={Download} onclick={download} />
+      <Button size="field" kind="primary" iconDescription="download" tooltipPosition="left" icon={Download} onclick={download} />
   </div>

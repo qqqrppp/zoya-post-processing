@@ -11,6 +11,7 @@
   import ContrastSettings from "./settings/Contrast.svelte";
   import MatrixSettings from "./settings/Matrix.svelte";
   import DitherSettings from "./settings/DitherSettings.svelte"
+  import BrushSettings from "./settings/Brush.svelte";
 
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
   import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
@@ -82,6 +83,10 @@
 
           <AccordionItem title="Pixelate">
             <PixelateSettings />
+          </AccordionItem>
+
+          <AccordionItem title="Brush">
+            <BrushSettings />
           </AccordionItem>
    
           <AccordionItem title="Blur">
