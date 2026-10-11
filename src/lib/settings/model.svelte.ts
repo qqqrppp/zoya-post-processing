@@ -29,7 +29,9 @@ import debounce from "lodash/debounce";
 import throttle from "lodash/throttle"
 import { isEqualObject } from "~/helpers";
 import { SimpleDither, type SimpleDitherSettings } from "~/filters/simpleDither";
+import { Halftone, type HalftoneSettings } from "~/filters/halftone";
 import { Posterization } from "~/filters/posterization";
+import { Palette, type PaletteSettings } from "~/filters/palette";
 
 type Settings = (
   | BlurSettings
@@ -40,8 +42,10 @@ type Settings = (
   | ColorCorrectionSettings
   | MatrixSettings
   | SimpleDitherSettings
+  | HalftoneSettings
   | PosterizationSettings
   | BrushSettings
+  | PaletteSettings
 );
 
 //---------------Pixelate State-----------------------------
@@ -128,12 +132,35 @@ const initSimpleDither: SimpleDitherSettings = {
   monochrome: false,
 };
 
+const initHalftone: HalftoneSettings = {
+  name: Halftone.name,
+  dotSize: 0,
+  angle: 45,
+  smoothness: 0.15,
+  monochrome: true,
+  invert: false,
+  variant: 0,
+  merge: 0.5,
+  radiusK: 0.75,
+};
+
 const initPosterization: PosterizationSettings = {
   name: Posterization.name,
   variant: 0,
   isLinkedLevel: true,
   levels: [4, 4, 4],
-  palette: 0,
+  detailThreshold: 0.5,
+};
+
+// Исходная картинка, из которой можно собирать палитру. Заполняется в CanvasGpu
+const sourceImage = writable<ImageBitmap | null>(null);
+
+const initPalette: PaletteSettings = {
+  name: Palette.name,
+  variant: 1,
+  strength: 1.0,
+  lightnessWeight: 1.0,
+  colors: [],
 };
 
 function createFilter<T extends Settings>(settings: T) {
@@ -216,8 +243,10 @@ const inverse = createFilter(initInverse);
 const color = createFilter(initColor);
 const contrast = createFilter(initContrast);
 const simpleDither = createFilter(initSimpleDither)
+const halftone = createFilter(initHalftone);
 const posterization = createFilter(initPosterization)
 const brush = createFilter(initBrush)
+const palette = createFilter(initPalette)
 
 
 // const filters = {
@@ -248,8 +277,10 @@ function createHistory() {
     color,
     contrast,
     simpleDither,
+    halftone,
     posterization,
-    brush
+    brush,
+    palette
   ]
 
   const currentFilter = $derived.by(() => {
@@ -345,6 +376,9 @@ export {
   color,
   contrast,
   simpleDither,
+  halftone,
   posterization,
   brush,
+  palette,
+  sourceImage,
 };

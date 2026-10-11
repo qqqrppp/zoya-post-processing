@@ -21,7 +21,7 @@
       <RadioButton labelText="Anisotropic" value={BrushVariant.anisotropic} />
     </RadioButtonGroup>
 
-    <div style="margin-top: 1rem;">
+    <div>
       <Slider
         labelText="Brush size (radius)"
         min={0}
@@ -32,7 +32,7 @@
     </div>
 
     {#if $brush.variant !== BrushVariant.classic}
-      <div style="margin-top: 1rem;">
+      <div>
         <Slider
           labelText="Brush hardness"
           min={2.0}
@@ -44,7 +44,7 @@
     {/if}
 
     {#if $brush.variant === BrushVariant.anisotropic}
-      <div style="margin-top: 1rem;">
+      <div>
         <Slider
           labelText="Brush stretching (flow)"
           min={0.0}
@@ -55,7 +55,7 @@
       </div>
     {/if}
 
-    <div style="margin-top: 1rem;">
+    <div>
       <Slider
         labelText="Strength (opacity)"
         min={0.0}
