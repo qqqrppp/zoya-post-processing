@@ -13,7 +13,7 @@
     } from "~/filters/palettePresets";
     import { extractPalette, ExtractMethod } from "~/filters/extractPalette";
     import { palette, history, sourceImage } from "./model.svelte";
-    import { Tile, AccordionItem } from "carbon-components-svelte";
+    import { AccordionItem } from "carbon-components-svelte";
 
     let extractCount = $state(8);
     let extractMethod = $state(ExtractMethod.kmeans);
