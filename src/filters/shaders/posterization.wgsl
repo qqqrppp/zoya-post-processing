@@ -1,9 +1,9 @@
 struct Params {
-    variant: f32,   // 0 = Standard RGB, 1 = HSV, 2 = Palette Mapping
-    levelR: f32,    // Уровни R / Hue / Сила дизеринга палитры
-    levelG: f32,    // Уровни G / Saturation / Прозрачность палитры
-    levelB: f32,    // Уровни B / Value
-    palette: f32,   // Выбранная палитра (0..5)
+    variant: f32,           // 0 = Standard RGB, 1 = HSV, 2 = Oklab, 3 = Adaptive
+    levelR: f32,            // Уровни R / Hue / Lightness
+    levelG: f32,            // Уровни G / Saturation / Chroma A
+    levelB: f32,            // Уровни B / Value / Chroma B
+    detailThreshold: f32,   // Порог детализации для adaptive режима (0.0 - 1.0)
 }
 
 @group(0) @binding(0) var<uniform> params : Params;
@@ -11,61 +11,7 @@ struct Params {
 @group(1) @binding(0) var inputTexture : texture_2d<f32>;
 @group(1) @binding(1) var outputTexture : texture_storage_2d<rgba8unorm, write>;
 
-// Константы ретро-палитр (все выровнены ровно до 8 цветов для простоты сэмплирования)
-const PALETTES = array<array<vec3f, 8>, 6>(
-    // 0. GameBoy Classic (зеленый монохром)
-    array<vec3f, 8>(
-        vec3f(0.058, 0.219, 0.058), vec3f(0.058, 0.219, 0.058),
-        vec3f(0.188, 0.384, 0.188), vec3f(0.188, 0.384, 0.188),
-        vec3f(0.545, 0.674, 0.058), vec3f(0.545, 0.674, 0.058),
-        vec3f(0.607, 0.737, 0.058), vec3f(0.607, 0.737, 0.058)
-    ),
-    // 1. CGA Mode 4 (Черный, Голубой, Пурпурный, Белый)
-    array<vec3f, 8>(
-        vec3f(0.0, 0.0, 0.0), vec3f(0.0, 0.0, 0.0),
-        vec3f(0.0, 1.0, 1.0), vec3f(0.0, 1.0, 1.0),
-        vec3f(1.0, 0.0, 1.0), vec3f(1.0, 0.0, 1.0),
-        vec3f(1.0, 1.0, 1.0), vec3f(1.0, 1.0, 1.0)
-    ),
-    // 2. Cyberpunk Neon
-    array<vec3f, 8>(
-        vec3f(0.05, 0.0, 0.1), // Тёмно-фиолетовый
-        vec3f(1.0, 0.0, 0.5),  // Розовый неон
-        vec3f(0.0, 1.0, 1.0),  // Голубой неон
-        vec3f(0.5, 0.0, 1.0),  // Фиолетовый неон
-        vec3f(1.0, 0.9, 0.0),  // Желтый неон
-        vec3f(0.0, 0.1, 0.5),  // Синий
-        vec3f(1.0, 0.4, 0.0),  // Оранжевый
-        vec3f(0.9, 0.9, 0.9)   // Светло-серый
-    ),
-    // 3. Retro Sunset (Закат)
-    array<vec3f, 8>(
-        vec3f(0.1, 0.0, 0.2), // Тёмная ночь
-        vec3f(0.3, 0.0, 0.3), // Сумерки
-        vec3f(0.5, 0.0, 0.2), // Пурпурный
-        vec3f(0.8, 0.1, 0.1), // Красный
-        vec3f(0.9, 0.3, 0.0), // Тёмно-оранжевый
-        vec3f(1.0, 0.6, 0.0), // Оранжевый
-        vec3f(1.0, 0.8, 0.0), // Желтый
-        vec3f(1.0, 0.9, 0.5)  // Золотой рассвет
-    ),
-    // 4. Monochrome Gray (8 градаций серого)
-    array<vec3f, 8>(
-        vec3f(0.0), vec3f(0.14), vec3f(0.28), vec3f(0.42),
-        vec3f(0.56), vec3f(0.70), vec3f(0.84), vec3f(1.0)
-    ),
-    // 5. NES Retro (классическая палитра Dendy)
-    array<vec3f, 8>(
-        vec3f(0.0, 0.0, 0.0),       // Черный
-        vec3f(0.1, 0.1, 0.9),       // Синий
-        vec3f(0.0, 0.6, 0.0),       // Зеленый
-        vec3f(0.9, 0.1, 0.1),       // Красный
-        vec3f(0.9, 0.6, 0.0),       // Оранжевый
-        vec3f(0.8, 0.8, 0.0),       // Желтый
-        vec3f(0.5, 0.3, 0.1),       // Коричневый
-        vec3f(1.0, 1.0, 1.0)        // Белый
-    )
-);
+// ---------- Цветовые конвертации ----------
 
 fn rgb_to_hsv(c: vec3f) -> vec3f {
     let K = vec4f(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -83,27 +29,63 @@ fn hsv_to_rgb(c: vec3f) -> vec3f {
     return c.z * mix(K.xxx, clamp(p - K.xxx, vec3f(0.0), vec3f(1.0)), c.y);
 }
 
-fn get_closest_palette_color(color: vec3f, palette_idx: i32) -> vec3f {
-    let palette = PALETTES[palette_idx];
-    var min_dist = 99999.0;
-    var best_color = palette[0];
+// RGB to Oklab conversion
+fn rgb_to_oklab(c: vec3f) -> vec3f {
+    // Linear sRGB to OKLab
+    let l = 0.4122214708 * c.r + 0.5363325363 * c.g + 0.0514459929 * c.b;
+    let m = 0.2119034982 * c.r + 0.6806995451 * c.g + 0.1073969566 * c.b;
+    let s = 0.0883024619 * c.r + 0.2817188376 * c.g + 0.6299787005 * c.b;
     
-    for (var i = 0; i < 8; i = i + 1) {
-        let dist = distance(color, palette[i]);
-        if dist < min_dist {
-            min_dist = dist;
-            best_color = palette[i];
-        }
-    }
+    let l_ = pow(max(l, 0.0), 1.0 / 3.0);
+    let m_ = pow(max(m, 0.0), 1.0 / 3.0);
+    let s_ = pow(max(s, 0.0), 1.0 / 3.0);
     
-    return best_color;
+    return vec3f(
+        0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+        1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+        0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_
+    );
 }
 
-// Быстрый хэш шума на GPU
-fn hash2d(p: vec2f) -> f32 {
-    let sin_val = sin(dot(p, vec2f(127.1, 311.7)));
-    return fract(sin_val * 43758.5453123) - 0.5;
+fn oklab_to_rgb(c: vec3f) -> vec3f {
+    let l_ = c.x + 0.3963377774 * c.y + 0.2158037573 * c.z;
+    let m_ = c.x - 0.1055613458 * c.y - 0.0638541728 * c.z;
+    let s_ = c.x - 0.0894841775 * c.y - 1.2914855480 * c.z;
+    
+    let l = l_ * l_ * l_;
+    let m = m_ * m_ * m_;
+    let s = s_ * s_ * s_;
+    
+    return vec3f(
+        4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+        -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+        -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+    );
 }
+
+// ---------- Утилиты ----------
+
+// Вычисление локального контраста/детализации
+fn compute_detail(coords: vec2i) -> f32 {
+    let size = vec2i(textureDimensions(inputTexture));
+    let maxC = size - vec2i(1);
+
+    // Сэмплим соседние пиксели (с clamp по границам)
+    let left = textureLoad(inputTexture, clamp(coords + vec2i(-1, 0), vec2i(0), maxC), 0).rgb;
+    let right = textureLoad(inputTexture, clamp(coords + vec2i(1, 0), vec2i(0), maxC), 0).rgb;
+    let top = textureLoad(inputTexture, clamp(coords + vec2i(0, -1), vec2i(0), maxC), 0).rgb;
+    let bottom = textureLoad(inputTexture, clamp(coords + vec2i(0, 1), vec2i(0), maxC), 0).rgb;
+    
+    // Градиент как мера детализации
+    let grad_x = distance(left, right);
+    let grad_y = distance(top, bottom);
+    let gradient = sqrt(grad_x * grad_x + grad_y * grad_y);
+    
+    // Нормализуем в диапазон 0-1
+    return clamp(gradient * 2.0, 0.0, 1.0);
+}
+
+// ---------- Main shader ----------
 
 @compute @workgroup_size(16, 16)
 fn main(
@@ -116,18 +98,18 @@ fn main(
 
     let coords = vec2i(id.xy);
     let color = textureLoad(inputTexture, coords, 0);
-
+    
     let variant = i32(params.variant);
-    var posterized = color;
+    var posterized = color.rgb;
 
     if variant == 0 {
         // Standard RGB Posterization
-        posterized = vec4<f32>(
+        posterized = vec3f(
             floor(color.r * params.levelR + 0.5) / params.levelR,
             floor(color.g * params.levelG + 0.5) / params.levelG,
-            floor(color.b * params.levelB + 0.5) / params.levelB,
-            color.a
+            floor(color.b * params.levelB + 0.5) / params.levelB
         );
+        
     } else if variant == 1 {
         // HSV Posterization
         var hsv = rgb_to_hsv(color.rgb);
@@ -139,26 +121,42 @@ fn main(
             hsv.z = floor(hsv.z * params.levelB + 0.5) / params.levelB;
         }
 
-        posterized = vec4f(hsv_to_rgb(hsv), color.a);
+        posterized = hsv_to_rgb(hsv);
+        
     } else if variant == 2 {
-        // Palette Mapping
-        let p_idx = clamp(i32(params.palette), 0, 5);
-        let dither_amount = params.levelR; // levelR используется как сила шума
+        // Oklab Posterization (perceptually uniform)
+        var oklab = rgb_to_oklab(color.rgb);
         
-        // Инжектируем шум дизеринга
-        let noise = hash2d(vec2f(id.xy)) * dither_amount;
-        let dithered_rgb = clamp(color.rgb + vec3f(noise), vec3f(0.0), vec3f(1.0));
+        // a и b лежат примерно в [-0.4, 0.4] - нормируем в [0, 1] перед квантованием
+        let ab = oklab.yz * 1.25 + vec2f(0.5);
+
+        let q_l = floor(oklab.x * params.levelR + 0.5) / params.levelR;
+        let q_a = floor(ab.x * params.levelG + 0.5) / params.levelG;
+        let q_b = floor(ab.y * params.levelB + 0.5) / params.levelB;
+
+        let result = vec3f(q_l, (q_a - 0.5) / 1.25, (q_b - 0.5) / 1.25);
+        posterized = clamp(oklab_to_rgb(result), vec3f(0.0), vec3f(1.0));
         
-        let mapped_rgb = get_closest_palette_color(dithered_rgb, p_idx);
-        posterized = vec4f(mapped_rgb, color.a);
+    } else if variant == 3 {
+        // Adaptive Posterization with detail preservation
+        let detail = compute_detail(coords);
+
+        // Высокая детализация = больше уровней (детали сохраняются)
+        // Плоские области = базовое число уровней (сильная постеризация)
+        // detailThreshold - при каком контрасте области считаются детальными
+        let t = smoothstep(0.0, max(params.detailThreshold, 0.001), detail);
+
+        let adaptive_level_r = mix(params.levelR, params.levelR * 3.0, t);
+        let adaptive_level_g = mix(params.levelG, params.levelG * 3.0, t);
+        let adaptive_level_b = mix(params.levelB, params.levelB * 3.0, t);
+        
+        posterized = vec3f(
+            floor(color.r * adaptive_level_r + 0.5) / adaptive_level_r,
+            floor(color.g * adaptive_level_g + 0.5) / adaptive_level_g,
+            floor(color.b * adaptive_level_b + 0.5) / adaptive_level_b
+        );
     }
 
-    // Регулируем прозрачность наложения (для палитры берем из params.levelG, для остальных 1.0)
-    var final_opacity = 1.0;
-    if variant == 2 {
-        final_opacity = params.levelG; // levelG используется как прозрачность
-    }
 
-    let final_color = mix(color, posterized, final_opacity);
-    textureStore(outputTexture, coords, final_color);
+    textureStore(outputTexture, coords, vec4f(posterized, color.a));
 }

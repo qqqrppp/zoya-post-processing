@@ -22,7 +22,6 @@
       <RadioButton labelText="Bayer 8x8" value={DitherVariant.bayer8x8} />
       <RadioButton labelText="Bayer 16x16" value={DitherVariant.bayer16x16} />
       <RadioButton labelText="Noise Grain" value={DitherVariant.noise} />
-      <RadioButton labelText="Halftone Dots" value={DitherVariant.halftone} />
     </RadioButtonGroup>
 
     <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
