@@ -6,7 +6,6 @@ export enum Variant {
     bayer8x8 = 1,
     bayer16x16 = 2,
     noise = 3,
-    halftone = 4,
 }
 
 export type SimpleDitherSettings = {

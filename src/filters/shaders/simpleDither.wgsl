@@ -1,10 +1,10 @@
 struct Params {
-    variant: f32,     // 0 = Bayer 4x4, 1 = Bayer 8x8, 2 = Bayer 16x16, 3 = Noise, 4 = Halftone
+    variant: f32,     // 0 = Bayer 4x4, 1 = Bayer 8x8, 2 = Bayer 16x16, 3 = Noise
     levelR: f32,      // Уровни квантования R (или серого)
     levelG: f32,      // Уровни квантования G
     levelB: f32,      // Уровни квантования B
     equalizing: f32,  // Сила смещения порога (-1.0 .. 1.0)
-    scale: f32,       // Масштаб сетки (1.0, 2.0, 4.0, 8.0)
+    scale: f32,       // Масштаб сетки (1.0, 2.0, 4.0, 8.0...)
     monochrome: f32,  // 0.0 = Цветной дизеринг, 1.0 = Черно-белый
 }
 
@@ -61,54 +61,47 @@ fn hash2d(p: vec2f) -> f32 {
 fn main(
     @builtin(global_invocation_id) id: vec3<u32>
 ) {
-    let textureSize = textureDimensions(inputTexture);
-    if id.x >= textureSize.x || id.y >= textureSize.y {
+    let textureSize = vec2i(textureDimensions(inputTexture));
+    if id.x >= u32(textureSize.x) || id.y >= u32(textureSize.y) {
         return;
     }
 
-    let coords = vec2i(id.xy);
-    var color = textureLoad(inputTexture, coords, 0);
-
-    // Если включен Monochrome режим, переводим пиксель в Ч/Б
-    if params.monochrome > 0.5 {
-        let gray = dot(color.rgb, vec3f(0.299, 0.587, 0.114));
-        color = vec4f(gray, gray, gray, color.a);
-    }
-
-    let scale = max(1.0, params.scale);
-    let ditherX = u32(f32(id.x) / scale);
-    let ditherY = u32(f32(id.y) / scale);
-
+    let scale = max(1.0, floor(params.scale));
     let variant = i32(params.variant);
+
+    // Ретро-дизеринг (Bayer / Noise) с крупными пикселями
+    let blockIndex = vec2u(vec2f(id.xy) / scale);
+
+    // Берем цвет из центра крупного пикселя
+    let sampleCoords = clamp(
+        vec2i(vec2f(blockIndex) * scale + scale * 0.5),
+        vec2i(0),
+        textureSize - vec2i(1)
+    );
+    var color = textureLoad(inputTexture, sampleCoords, 0);
+
+    let ditherX = blockIndex.x;
+    let ditherY = blockIndex.y;
     var threshold = 0.0;
 
     if variant == 0 {
         // Bayer 4x4 Ordered Dither
         threshold = (BAYER_4x4[ditherX % 4u][ditherY % 4u] / 16.0) - 0.5;
-
     } else if variant == 1 {
         // Bayer 8x8 Ordered Dither
         threshold = (BAYER_8x8[ditherX % 8u][ditherY % 8u] / 64.0) - 0.5;
-
     } else if variant == 2 {
         // Bayer 16x16 Ordered Dither
         threshold = (BAYER_16x16[ditherX % 16u][ditherY % 16u] / 256.0) - 0.5;
-
     } else if variant == 3 {
-        // Noise Dither (случайное зерно)
+        // Noise Dither
         threshold = hash2d(vec2f(f32(ditherX), f32(ditherY))) * 1.0;
+    }
 
-    } else if variant == 4 {
-        // Halftone Dither (крупный комикс-растр)
-        let cell_size = scale;
-        let cell_x = (floor(f32(id.x) / cell_size) + 0.5) * cell_size;
-        let cell_y = (floor(f32(id.y) / cell_size) + 0.5) * cell_size;
-        
-        let dist = distance(vec2f(id.xy), vec2f(cell_x, cell_y));
-        let max_radius = cell_size * 0.7071; // Полудиагональ ячейки
-        
-        // Переводим радиальное расстояние в порог
-        threshold = (dist / max_radius) - 0.5;
+    // Если включен Monochrome режим, переводим цвет в ч/б
+    if params.monochrome > 0.5 {
+        let gray = dot(color.rgb, vec3f(0.299, 0.587, 0.114));
+        color = vec4f(gray, gray, gray, color.a);
     }
 
     // Применяем дизеринг по формуле квантования со смещением
