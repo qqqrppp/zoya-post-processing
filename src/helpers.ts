@@ -42,14 +42,14 @@ const matrixCxRs = (c: number, r: number, s: 'i' | 'f' | 'u' = 'i') =>  {
 
 
 export function hexToRgbA(hex: string){
-    var c;
+    var c: string[];
     if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
         c = hex.substring(1).split('');
         if(c.length== 3){
-            c= [c[0], c[0], c[1], c[1], c[2], c[2]];
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
         }
-        c= '0x'+c.join('');
-        return [(c>>16)&255, (c>>8)&255, c&255, 0];
+        const x = Number('0x'+c.join(''));
+        return [(x>>16)&255, (x>>8)&255, x&255, 0];
     }
     throw new Error('Bad Hex');
 }
