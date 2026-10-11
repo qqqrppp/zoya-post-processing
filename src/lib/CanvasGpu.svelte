@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { Core } from "~/filters";
-  import { history } from "./settings/model.svelte";
+  import { history, sourceImage } from "./settings/model.svelte";
   import { hexToRgbA, rgbaToFloat } from "~/helpers";
   import Undo from "~/ui/Undo.svelte";
   import Reset from "~/ui/Reset.svelte";
@@ -42,6 +42,7 @@
     }
 
     bitMap = await createImageBitmap(file);
+    sourceImage.set(bitMap);
 
     context = canvas.getContext("webgpu") as GPUCanvasContext;
 
@@ -120,10 +121,18 @@
     const blob = await canvas.convertToBlob({ type: file.type });
     const url = URL.createObjectURL(blob);
 
-    window.open(url, "_blank");
+    // window.open после await блокируется попап-блокером, а ранний revoke ломает загрузку,
+    // поэтому скачиваем через <a download>
+    const ext = blob.type.split("/")[1] ?? "jpg";
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `image.${ext}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-    // Освобождаем память
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    // Освобождаем память после старта скачивания
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }
 
   function getAdjustedViewport(canvas, bitMap) {
@@ -196,6 +205,7 @@
 
     return () => {
       resizeObserver.disconnect();
+      sourceImage.set(null);
     };
   });
 

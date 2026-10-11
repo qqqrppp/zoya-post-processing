@@ -11,24 +11,34 @@
   import ContrastSettings from "./settings/Contrast.svelte";
   import MatrixSettings from "./settings/Matrix.svelte";
   import DitherSettings from "./settings/DitherSettings.svelte"
+  import HalftoneSettings from "./settings/HalftoneSettings.svelte";
   import BrushSettings from "./settings/Brush.svelte";
 
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
   import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
   import SaveSeries from "carbon-icons-svelte/lib/WatsonHealthSaveSeries.svelte";
+  import ColorPalette from "carbon-icons-svelte/lib/ColorPalette.svelte";
+
+  // <ColorPalette />
   import Contrast from "carbon-icons-svelte/lib/Contrast.svelte";
   import Posterization from "./settings/Posterization.svelte";
+  import PaletteSettings from "./settings/Palette.svelte";
 
   let selected = $state("effect");
   let items = $state([
+    // {
+    //   icon: SaveSeries,
+    //   name: "preset",
+    //   isSelected: false,
+    // },
+    // {
+    //   icon: Contrast,
+    //   name: "contrast",
+    //   isSelected: false,
+    // },
     {
-      icon: SaveSeries,
-      name: "preset",
-      isSelected: false,
-    },
-    {
-      icon: Contrast,
-      name: "contrast",
+      icon: ColorPalette,
+      name: "palette",
       isSelected: false,
     },
     {
@@ -73,7 +83,7 @@
           </AccordionItem>
           <AccordionItem title="Inverse">
             <InverseSettings />
-          </AccordionItem> 
+          </AccordionItem>
         {/if}
 
         {#if selected == "effect"}
@@ -88,16 +98,24 @@
           <AccordionItem title="Brush">
             <BrushSettings />
           </AccordionItem>
-   
+
           <AccordionItem title="Blur">
             <BlurSettings />
           </AccordionItem>
           <AccordionItem title="Dither">
             <DitherSettings />
           </AccordionItem>
+          <AccordionItem title="Halftone">
+            <HalftoneSettings />
+          </AccordionItem>
           <AccordionItem title="Posterization">
             <Posterization />
           </AccordionItem>
+        {/if}
+        {#if selected == "palette"}
+            <div class="px-4">
+                <PaletteSettings />
+            </div>
         {/if}
       </Accordion>
     </div>

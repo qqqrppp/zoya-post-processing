@@ -9,8 +9,10 @@ import { Inverse, type InverseSettings } from './inverse'
 import { Contrast, ColorCorrection, type ColorCorrectionSettings } from './colorCorrection'
 import { Matrix } from './matrix';
 import { SimpleDither, type SimpleDitherSettings, Variant as DitherVariant } from './simpleDither';
-import { Posterization, type PosterizationSettings, Variant as PosterizationVariant, PaletteType as PosterizationPalette } from './posterization';
+import { Halftone, type HalftoneSettings, Variant as HalftoneVariant } from './halftone';
+import { Posterization, type PosterizationSettings, Variant as PosterizationVariant } from './posterization';
 import { Brush, type BrushSettings, Variant as BrushVariant } from './brush';
+import { Palette, type PaletteSettings, Variant as PaletteVariant, MAX_PALETTE_COLORS } from './palette';
 
 export { type BlurSettings, Blur }
 export { type GaussianBlurSettings, GaussianBlur }
@@ -19,9 +21,11 @@ export { type PixelateSettings, Pixelate, PixelateVariant }
 export { type InverseSettings, Inverse }
 export { type ColorCorrectionSettings, ColorCorrection }
 export { Contrast, Matrix }
-export { type PosterizationSettings, Posterization, PosterizationVariant, PosterizationPalette }
+export { type PosterizationSettings, Posterization, PosterizationVariant }
 export { type SimpleDitherSettings, SimpleDither, DitherVariant }
+export { type HalftoneSettings, Halftone, HalftoneVariant }
 export { type BrushSettings, Brush, BrushVariant }
+export { type PaletteSettings, Palette, PaletteVariant, MAX_PALETTE_COLORS }
 
 const filters = [
     Blur,
@@ -33,8 +37,10 @@ const filters = [
     Contrast,
     Matrix,
     SimpleDither,
+    Halftone,
     Posterization,
-    Brush
+    Brush,
+    Palette
 ] as const
 
 type Filters = InstanceType<(typeof filters)[number]>
@@ -241,22 +247,29 @@ export class Core {
     }
 
     async upload(): Promise<Uint8Array<ArrayBuffer>> {
-        const bufferSize = this.imageBitmap.width * this.imageBitmap.height * 4; // RGBA, 4 байта на пиксель
+        const width = this.imageBitmap.width;
+        const height = this.imageBitmap.height;
+        const bytesPerPixel = 4; // RGBA, 4 байта на пиксель
+        const unpaddedBytesPerRow = width * bytesPerPixel;
+        const align = 256;
+        const paddedBytesPerRow = Math.ceil(unpaddedBytesPerRow / align) * align;
+        const bufferSize = paddedBytesPerRow * height;
+
         const outputBuffer = this.device.createBuffer({
             size: bufferSize,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
         });
 
-        // Копируем текстуру в буфер
+        // Копируем текстуру в буфер с выравниванием bytesPerRow по стандарту WebGPU (кратно 256)
         const commandEncoder = this.device.createCommandEncoder();
         commandEncoder.copyTextureToBuffer(
             { texture: this.outputTexture },
             {
                 buffer: outputBuffer,
-                bytesPerRow: this.imageBitmap.width * 4,
-                rowsPerImage: this.imageBitmap.height
+                bytesPerRow: paddedBytesPerRow,
+                rowsPerImage: height
             },
-            { width: this.imageBitmap.width, height: this.imageBitmap.height }
+            { width, height }
         );
 
         this.device.queue.submit([commandEncoder.finish()]);
@@ -265,10 +278,24 @@ export class Core {
 
         // Читаем данные из буфера
         await outputBuffer.mapAsync(GPUMapMode.READ);
-        const arrayBuffer = new Uint8Array(outputBuffer.getMappedRange());
-        const copy = new Uint8Array(arrayBuffer); // Создаем копию данных
-        // TODO: нужно очистить после использования
-        await outputBuffer.unmap(); // как очистить ресы
+        const mappedRange = outputBuffer.getMappedRange();
+
+        // Извлекаем данные без паддинга строк
+        const copy = new Uint8Array(unpaddedBytesPerRow * height);
+        if (paddedBytesPerRow === unpaddedBytesPerRow) {
+            copy.set(new Uint8Array(mappedRange));
+        } else {
+            const raw = new Uint8Array(mappedRange);
+            for (let y = 0; y < height; y++) {
+                const srcStart = y * paddedBytesPerRow;
+                const srcEnd = srcStart + unpaddedBytesPerRow;
+                const dstStart = y * unpaddedBytesPerRow;
+                copy.set(raw.subarray(srcStart, srcEnd), dstStart);
+            }
+        }
+
+        outputBuffer.unmap();
+        outputBuffer.destroy();
 
         return copy;
     }
