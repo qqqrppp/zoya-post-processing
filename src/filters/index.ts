@@ -300,6 +300,13 @@ export class Core {
         return copy;
     }
 
+    // Освобождает основные текстуры. Промежуточные текстуры фильтров живут в их замыканиях
+    // и освобождаются сборщиком мусора.
+    destroy() {
+        this.inputTexture.destroy();
+        this.outputTexture.destroy();
+    }
+
     view(settings?: Record<FilterName, FilterSettings>, view) {
         this.initFrame()
 

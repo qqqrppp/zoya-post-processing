@@ -32,6 +32,7 @@ import { SimpleDither, type SimpleDitherSettings } from "~/filters/simpleDither"
 import { Halftone, type HalftoneSettings } from "~/filters/halftone";
 import { Posterization } from "~/filters/posterization";
 import { Palette, type PaletteSettings } from "~/filters/palette";
+import type { CropRect } from "~/filters/geometry";
 
 type Settings = (
   | BlurSettings
@@ -152,8 +153,15 @@ const initPosterization: PosterizationSettings = {
   detailThreshold: 0.5,
 };
 
-// Исходная картинка, из которой можно собирать палитру. Заполняется в CanvasGpu
+// Текущая рабочая картинка: на ней строится превью и из неё собирается палитра.
+// Заполняется в CanvasGpu, меняется операциями resize/crop/flip (см. settings/Resize.svelte)
 const sourceImage = writable<ImageBitmap | null>(null);
+
+// Загруженная картинка без геометрических правок, к ней возвращает кнопка «Вернуть оригинал»
+const originalImage = writable<ImageBitmap | null>(null);
+
+// Рамка обрезки в пикселях рабочей картинки; null — рамка скрыта
+const cropRect = writable<CropRect | null>(null);
 
 const initPalette: PaletteSettings = {
   name: Palette.name,
@@ -381,4 +389,6 @@ export {
   brush,
   palette,
   sourceImage,
+  originalImage,
+  cropRect,
 };

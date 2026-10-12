@@ -144,25 +144,27 @@
             </Button>
         </AccordionItem>
 
-        <div class="presets">
-            <span class="presets-label">Presets</span>
-            {#each palettePresets as preset}
-                <button
-                    type="button"
-                    class="preset"
-                    class:active={isActive(preset, $palette.colors)}
-                    onclick={() => applyPreset(preset)}
-                >
-                    <span class="preset-name">{preset.name}</span>
-                    <span class="swatches">
-                        {#each preset.colors as color}
-                            <span class="swatch" style:background-color={color}
-                            ></span>
-                        {/each}
-                    </span>
-                </button>
-            {/each}
-        </div>
+        <AccordionItem title="Presets">
+            <div class="presets">
+                {#each palettePresets as preset}
+                    <button
+                        type="button"
+                        class="preset"
+                        class:active={isActive(preset, $palette.colors)}
+                        onclick={() => applyPreset(preset)}
+                    >
+                        <span class="preset-name">{preset.name}</span>
+                        <span class="swatches">
+                            {#each preset.colors as color}
+                                <span class="swatch" style:background-color={color}
+                                ></span>
+                            {/each}
+                        </span>
+                    </button>
+                {/each}
+            </div>
+        </AccordionItem>
+
 
         <div class="colors">
             {#each $palette.colors as _, i}
@@ -199,7 +201,7 @@
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
-        margin-top: 1rem;
+        /*margin-top: 1rem;*/
     }
 
     .presets-label {

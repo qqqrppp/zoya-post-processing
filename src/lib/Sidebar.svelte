@@ -15,7 +15,7 @@
   import BrushSettings from "./settings/Brush.svelte";
 
   import Fade from "carbon-icons-svelte/lib/Fade.svelte";
-  import Color from "carbon-icons-svelte/lib/ColorPalette.svelte";
+  import ColorSwitch from "carbon-icons-svelte/lib/ColorSwitch.svelte";
   import SaveSeries from "carbon-icons-svelte/lib/WatsonHealthSaveSeries.svelte";
   import ColorPalette from "carbon-icons-svelte/lib/ColorPalette.svelte";
 
@@ -23,9 +23,16 @@
   import Contrast from "carbon-icons-svelte/lib/Contrast.svelte";
   import Posterization from "./settings/Posterization.svelte";
   import PaletteSettings from "./settings/Palette.svelte";
+  import ResizeSettings from "./settings/Resize.svelte";
+  import Crop from "carbon-icons-svelte/lib/Crop.svelte";
 
-  let selected = $state("effect");
+  let selected = $state("resize");
   let items = $state([
+    {
+      icon: Crop,
+      name: "resize",
+      isSelected: false,
+    },
     // {
     //   icon: SaveSeries,
     //   name: "preset",
@@ -42,7 +49,7 @@
       isSelected: false,
     },
     {
-      icon: Color,
+      icon: ColorSwitch,
       name: "color",
       isSelected: false,
     },
@@ -111,6 +118,11 @@
           <AccordionItem title="Posterization">
             <Posterization />
           </AccordionItem>
+        {/if}
+        {#if selected == "resize"}
+            <div class="px-4">
+                <ResizeSettings />
+            </div>
         {/if}
         {#if selected == "palette"}
             <div class="px-4">

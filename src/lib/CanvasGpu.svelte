@@ -1,12 +1,18 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { Core } from "~/filters";
-  import { history, sourceImage } from "./settings/model.svelte";
+  import {
+    history,
+    sourceImage,
+    originalImage,
+  } from "./settings/model.svelte";
+  import CropOverlay from "./CropOverlay.svelte";
   import { hexToRgbA, rgbaToFloat } from "~/helpers";
   import Undo from "~/ui/Undo.svelte";
   import Reset from "~/ui/Reset.svelte";
   import Download from "~/ui/Download.svelte";
   import debounce from "lodash/debounce";
+  import { get } from "svelte/store";
 
   let { file } = $props();
   let filter = $state<Core>();
@@ -29,6 +35,65 @@
     imageWidth: 1.0,
     imageHeight: 1.0
   };
+  let clearValue: number[];
+
+  // Реактивные данные для CropOverlay (рамка рисуется в HTML поверх холста)
+  let imageSize = $state({ width: 1, height: 1 });
+  let canvasPixelWidth = $state(0);
+  let overlayOffset = $state({ x: 0, y: 0 });
+
+  // Строит Core под новую рабочую картинку и освобождает ресурсы предыдущей
+  function buildCore(bitmap: ImageBitmap) {
+    const previous = filter;
+    const previousBitmap = bitMap;
+
+    bitMap = bitmap;
+    imageSize = { width: bitmap.width, height: bitmap.height };
+    offset = { x: 0, y: 0 };
+    overlayOffset = { x: 0, y: 0 };
+
+    // Рассчитываем начальный масштаб с отступом
+    // Если изображение больше холста, уменьшаем его с отступом 20px
+    const padding = 20;
+    const scaleX = (canvas.width - padding * 2) / bitmap.width;
+    const scaleY = (canvas.height - padding * 2) / bitmap.height;
+
+    // Используем меньший масштаб, чтобы изображение поместилось с отступом
+    scale = Math.min(scaleX, scaleY, 1.0);
+
+    // Передаем размеры холста и изображения для правильного расчета в шейдере
+    uvScale = {
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      imageWidth: bitmap.width,
+      imageHeight: bitmap.height
+    };
+
+    filter = new Core(
+      context!,
+      device!,
+      presentationFormat,
+      bitmap,
+      getAdjustedViewport(canvas, bitmap),
+      clearValue
+    );
+
+    previous?.destroy();
+    // Закрываем только после замены Core: старый Core ещё читает width/height битмапа
+    if (previousBitmap && previousBitmap !== bitmap && previousBitmap !== get(originalImage)) {
+      previousBitmap.close();
+    }
+
+    render();
+  }
+
+  // Рабочую картинку меняют извне (resize/crop/flip), перестраиваем Core
+  $effect(() => {
+    const next = $sourceImage;
+    if (!next || !context || next === bitMap) return;
+
+    untrack(() => buildCore(next));
+  });
 
   async function create(canvas: HTMLCanvasElement) {
     if (!canvas) return;
@@ -41,8 +106,7 @@
       return;
     }
 
-    bitMap = await createImageBitmap(file);
-    sourceImage.set(bitMap);
+    const loaded = await createImageBitmap(file);
 
     context = canvas.getContext("webgpu") as GPUCanvasContext;
 
@@ -50,6 +114,7 @@
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * devicePixelRatio;
     canvas.height = rect.height * devicePixelRatio;
+    canvasPixelWidth = canvas.width;
 
     presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
@@ -58,53 +123,17 @@
       format: presentationFormat,
     });
 
-    const viewport = getAdjustedViewport(canvas, bitMap);
-
-    // Передаем соотношение сторон изображения
-    // const imageAspect = bitMap.width / bitMap.height;
-    // uvScale = { u: imageAspect, v: 1.0 };
-
-      // console.log(uvScale)
     const color = window
       .getComputedStyle(document.body)
       .getPropertyValue("--cds-ui-background");
+    clearValue = rgbaToFloat(hexToRgbA(color));
 
-    // Передаем соотношение сторон изображения
-    const imageAspect = bitMap.width / bitMap.height;
-    uvScale = { u: imageAspect, v: 1.0 };
+    // bitMap должен быть уже выставлен, иначе $effect по sourceImage перестроит Core второй раз
+    bitMap = loaded;
+    originalImage.set(loaded);
+    sourceImage.set(loaded);
 
-    //   // console.log(uvScale)
-    // const color = window
-    //   .getComputedStyle(document.body)
-    //   .getPropertyValue("--cds-ui-background");
-
-    filter = new Core(
-      context,
-      device,
-      presentationFormat,
-      bitMap,
-      viewport,
-      rgbaToFloat(hexToRgbA(color))
-    );
-
-    // Рассчитываем начальный масштаб с отступом
-    // Если изображение больше холста, уменьшаем его с отступом 20px
-    const padding = 20;
-    const scaleX = (canvas.width - padding * 2) / bitMap.width;
-    const scaleY = (canvas.height - padding * 2) / bitMap.height;
-
-    // Используем меньший масштаб, чтобы изображение поместилось с отступом
-    scale = Math.min(scaleX, scaleY, 1.0);
-
-    // Передаем размеры холста и изображения для правильного расчета в шейдере
-    uvScale = {
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
-      imageWidth: bitMap.width,
-      imageHeight: bitMap.height
-    };
-
-    render();
+    buildCore(loaded);
   }
 
   async function saveTexture() {
@@ -118,7 +147,9 @@
 
     context.putImageData(imageData, 0, 0);
 
-    const blob = await canvas.convertToBlob({ type: file.type });
+    // Без quality JPEG кодируется с ~0.92 и теряет качество. PNG сжимается без потерь,
+    // параметр quality для него игнорируется.
+    const blob = await canvas.convertToBlob({ type: file.type, quality: 1 });
     const url = URL.createObjectURL(blob);
 
     // window.open после await блокируется попап-блокером, а ранний revoke ломает загрузку,
@@ -172,6 +203,8 @@
       canvas.width = newWidth;
       canvas.height = newHeight;
 
+      canvasPixelWidth = canvas.width;
+
       context.configure({
         device,
         format: presentationFormat,
@@ -206,6 +239,8 @@
     return () => {
       resizeObserver.disconnect();
       sourceImage.set(null);
+      originalImage.set(null);
+      filter?.destroy();
     };
   });
 
@@ -241,6 +276,7 @@
     offset.y -= (deltaY * scaleY * 2) / canvas.height;
 
     lastMousePos = { x: event.clientX, y: event.clientY };
+    overlayOffset = { x: offset.x, y: offset.y };
 
     filter?.view(history.filters, { scale, offset, aspectRatio: uvScale });
   }
@@ -284,6 +320,14 @@
     onmouseup={handleMouseUp}
     onmouseleave={handleMouseLeave}
   ></canvas>
+
+  <CropOverlay
+    {scale}
+    offset={overlayOffset}
+    image={imageSize}
+    canvasWidth={canvasPixelWidth}
+    onwheel={changingsize}
+  />
 
   <div class="flex justify-between w-full">
     <div></div>
